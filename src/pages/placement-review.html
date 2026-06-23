@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placement Review — WAAPC Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0f1117; --gold: #c8943a; --teal: #1d6b6e;
+    --paper: #f5f0e8; --cream: #ede7d4; --white: #fff;
+    --border: #d4cfc4; --muted: #7a7468; --rust: #a0432a;
+    --green: #065f46; --sidebar: 220px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: var(--sidebar); background: var(--ink);
+    display: flex; flex-direction: column; z-index: 100;
+  }
+  .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand-tag { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.25rem; }
+  .sidebar-brand-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: white; line-height: 1.3; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: white; border-left-color: var(--gold); background: rgba(200,148,58,0.08); }
+  .sidebar-user {
+    padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; flex-shrink: 0; }
+  .user-name { font-size: 0.8rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .sign-out-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; margin-left: auto; }
+  .sign-out-btn:hover { color: var(--rust); }
+
+  .main { margin-left: var(--sidebar); min-height: 100vh; }
+  .topbar {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
+
+  /* TWO-PANEL */
+  .layout { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 57px); }
+  .panel-left { background: var(--white); border-right: 1px solid var(--border); overflow-y: auto; }
+  .panel-right { padding: 1.5rem 2rem; overflow-y: auto; }
+
+  .panel-header {
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal);
+  }
+
+  /* FILTERS */
+  .filter-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .filter-tab {
+    flex: 1; padding: 0.65rem 0.5rem; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .filter-tab:hover { color: var(--ink); }
+  .filter-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+  /* APPLICANT ITEMS */
+  .applicant-item {
+    padding: 1rem 1.25rem; border-bottom: 1px solid var(--cream);
+    cursor: pointer; transition: background 0.1s; position: relative;
+  }
+  .applicant-item:hover { background: #faf7f0; }
+  .applicant-item.selected { background: #eef7f7; border-left: 3px solid var(--teal); padding-left: calc(1.25rem - 3px); }
+  .applicant-item.flagged-item { border-left: 3px solid var(--rust); padding-left: calc(1.25rem - 3px); }
+  .ai-name { font-weight: 500; font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .ai-meta { font-size: 0.75rem; color: var(--muted); display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-block; padding: 0.15rem 0.45rem;
+    font-family: 'DM Mono', monospace; font-size: 0.58rem;
+    text-transform: uppercase; letter-spacing: 0.05em; border-radius: 2px;
+  }
+  .badge.provisional  { background: #fff8e6; color: #856404; border: 1px solid #ffe08a; }
+  .badge.flagged      { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+  .badge.confirmed    { background: #ecfdf5; color: var(--green); border: 1px solid #6ee7b7; }
+  .badge.pending      { background: var(--cream); color: var(--muted); border: 1px solid var(--border); }
+
+  /* DETAIL PANEL */
+  .no-selection {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 60vh; color: var(--muted); text-align: center;
+  }
+  .no-selection-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+  .detail-header {
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  }
+  .detail-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.25rem; }
+  .detail-meta { font-size: 0.82rem; color: var(--muted); }
+
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .info-card { background: var(--white); border: 1px solid var(--border); padding: 1.25rem; }
+  .info-card.full { grid-column: 1 / -1; }
+  .info-card-title {
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal);
+    margin-bottom: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--cream);
+  }
+
+  .score-row { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px dashed var(--cream); font-size: 0.88rem; }
+  .score-row:last-child { border-bottom: none; }
+  .score-label { color: var(--muted); }
+  .score-value { font-family: 'DM Mono', monospace; font-weight: 500; }
+  .score-bar-wrap { height: 5px; background: var(--cream); margin-top: 0.25rem; border-radius: 2px; }
+  .score-bar { height: 100%; border-radius: 2px; background: var(--teal); transition: width 0.5s ease; }
+
+  .flag-box { background: #fef2f2; border: 1px solid #fca5a5; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #991b1b; }
+  .flag-box strong { display: block; margin-bottom: 0.25rem; }
+
+  /* DECISION FORM */
+  .decision-card { background: var(--white); border: 2px solid var(--border); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .decision-card.action { border-color: var(--gold); }
+  .decision-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 1rem; }
+
+  .suggested-grade {
+    background: var(--paper); border: 1px solid var(--border);
+    padding: 0.75rem 1rem; margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .suggested-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .suggested-value { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--teal); }
+
+  .field label { display: block; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem; }
+  input[type=text], select, textarea {
+    width: 100%; border: 1.5px solid var(--border); padding: 0.65rem 0.85rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    color: var(--ink); background: var(--paper); outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--teal); background: var(--white); }
+
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+  .btn {
+    padding: 0.65rem 1.25rem; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.04em; transition: all 0.15s;
+  }
+  .btn-confirm  { background: var(--teal); color: white; }
+  .btn-confirm:hover  { background: var(--ink); }
+  .btn-override { background: var(--gold); color: white; }
+  .btn-override:hover { background: #a07020; }
+  .btn-flag     { background: var(--rust); color: white; }
+  .btn-flag:hover     { background: #7a2a1a; }
+  .btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+
+  .confirmed-box { background: #ecfdf5; border: 1px solid #6ee7b7; padding: 1.25rem; margin-bottom: 1rem; }
+  .confirmed-box h3 { font-family: 'Playfair Display', serif; color: var(--green); margin-bottom: 0.35rem; }
+  .confirmed-box p { font-size: 0.85rem; color: var(--green); }
+
+  .interview-rubric { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+  .rubric-field label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.3rem; }
+  .rubric-field select { padding: 0.5rem 0.6rem; font-size: 0.85rem; }
+
+  .alert { padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+  .alert.success { background: #ecfdf5; border: 1px solid #6ee7b7; color: var(--green); }
+  .alert.error   { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+
+  .loading-msg { padding: 2rem; text-align: center; color: var(--muted); font-style: italic; }
+
+  @media(max-width: 1100px) { .layout { grid-template-columns: 300px 1fr; } }
+  @media(max-width: 800px) {
+    .sidebar { display: none; } .main { margin-left: 0; }
+    .layout { grid-template-columns: 1fr; }
+    .panel-left { max-height: 40vh; }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-tag">Placement System</div>
+    <div class="sidebar-brand-name">WAAPC<br>American School</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard.html"><span>📋</span> Dashboard</a>
+    <a class="nav-item" href="applicant-new.html"><span>➕</span> New Applicant</a>
+    <a class="nav-item" href="assessment-builder.html"><span>📝</span> Assessments</a>
+    <a class="nav-item active" href="placement-review.html"><span>⚖️</span> Placements</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">—</div>
+    <div style="flex:1; overflow:hidden;">
+      <div class="user-name" id="userName">…</div>
+      <div class="user-role" id="userRole">—</div>
+    </div>
+    <button class="sign-out-btn" onclick="handleSignOut()">↩</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>Placement Review</h1>
+    <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--muted);">Academic Staff Only</span>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT -->
+    <div class="panel-left">
+      <div class="panel-header">
+        <span class="panel-title">Applicants</span>
+        <span id="listCount" style="font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--muted);">—</span>
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterList('all', this)">All</div>
+        <div class="filter-tab" onclick="filterList('flagged', this)">Flagged</div>
+        <div class="filter-tab" onclick="filterList('provisional', this)">Provisional</div>
+        <div class="filter-tab" onclick="filterList('confirmed', this)">Confirmed</div>
+      </div>
+      <div id="applicantList"><div class="loading-msg">Loading…</div></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="panel-right" id="panelRight">
+      <div class="no-selection">
+        <div class="no-selection-icon">⚖️</div>
+        <p>Select an applicant from the list<br>to review their placement.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { supabase, requireAuth, getCurrentStaff, signOut, computePlacement, logAudit } from '../lib/supabase.js'
+
+let staff = null
+let allApplicants = []
+let currentApplicant = null
+let showOverrideField = false
+
+window.handleSignOut = signOut
+
+// ── INIT ──
+async function init() {
+  await requireAuth()
+  staff = await getCurrentStaff()
+  if (!staff) return
+  document.getElementById('userAvatar').textContent = staff.full_name.charAt(0)
+  document.getElementById('userName').textContent   = staff.full_name
+  document.getElementById('userRole').textContent   = staff.role
+  await loadApplicants()
+}
+
+// ── LOAD APPLICANTS ──
+async function loadApplicants() {
+  const { data, error } = await supabase
+    .from('applicants')
+    .select(`
+      id, full_name, date_of_birth, age_band, parent_email,
+      placement_status, transcript_available, notes, created_at,
+      placement_decisions(*),
+      test_sessions(id, raw_score, percentage, status, submitted_at,
+        assessments(title, subject)),
+      interview_records(*)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) { console.error(error); return }
+  allApplicants = data || []
+  renderList(allApplicants)
+}
+
+// ── RENDER LIST ──
+function renderList(list) {
+  document.getElementById('listCount').textContent = list.length
+  const container = document.getElementById('applicantList')
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="loading-msg">No applicants found.</div>'
+    return
+  }
+
+  container.innerHTML = list.map(a => {
+    const d = a.placement_decisions?.[0]
+    const grade = d?.final_grade || '—'
+    const isFlagged = a.placement_status === 'flagged'
+    return `
+      <div class="applicant-item ${isFlagged ? 'flagged-item' : ''}" id="aitem-${a.id}" onclick="selectApplicant('${a.id}')">
+        <div class="ai-name">${a.full_name}</div>
+        <div class="ai-meta">
+          <span class="badge ${a.placement_status}">${a.placement_status}</span>
+          <span>Band ${a.age_band || '—'}</span>
+          ${d ? `<span style="font-family:'DM Mono',monospace;">${grade}</span>` : '<span>No decision yet</span>'}
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+// ── FILTER ──
+window.filterList = function(status, btn) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'))
+  btn.classList.add('active')
+  const filtered = status === 'all' ? allApplicants : allApplicants.filter(a => a.placement_status === status)
+  renderList(filtered)
+}
+
+// ── SELECT APPLICANT ──
+window.selectApplicant = async function(id) {
+  document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('selected'))
+  document.getElementById('aitem-' + id)?.classList.add('selected')
+  currentApplicant = allApplicants.find(a => a.id === id)
+  showOverrideField = false
+  renderDetail()
+}
+
+// ── RENDER DETAIL ──
+function renderDetail() {
+  const a = currentApplicant
+  if (!a) return
+
+  const d      = a.placement_decisions?.[0]
+  const tests  = a.test_sessions || []
+  const intv   = a.interview_records?.[0]
+  const right  = document.getElementById('panelRight')
+
+  const mathTest    = tests.find(t => t.assessments?.subject === 'math')
+  const englishTest = tests.find(t => t.assessments?.subject === 'english')
+
+  right.innerHTML = `
+    <div class="alert success" id="alertSuccess"></div>
+    <div class="alert error"   id="alertError"></div>
+
+    <div class="detail-header">
+      <div>
+        <div class="detail-name">${a.full_name}</div>
+        <div class="detail-meta">
+          ${a.parent_email} &nbsp;·&nbsp; Age Band: <strong>${a.age_band || '—'}</strong>
+          &nbsp;·&nbsp; <span class="badge ${a.placement_status}">${a.placement_status}</span>
+        </div>
+      </div>
+      ${a.placement_status !== 'confirmed' ? `
+        <button class="btn btn-secondary" style="font-size:0.78rem; padding:0.4rem 0.9rem;"
+          onclick="triggerDecisionEngine()">🔄 Run Decision Engine</button>
+      ` : ''}
+    </div>
+
+    ${d?.flagged_reason ? `
+      <div class="flag-box">
+        <strong>⚠ Flagged for Review</strong>
+        ${d.flagged_reason}
+      </div>
+    ` : ''}
+
+    <!-- TEST SCORES -->
+    <div class="cards-grid">
+      <div class="info-card">
+        <div class="info-card-title">Math Test</div>
+        ${renderTestScore(mathTest)}
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">English Test</div>
+        ${renderTestScore(englishTest)}
+      </div>
+
+      <!-- INTERVIEW -->
+      <div class="info-card">
+        <div class="info-card-title">Interview</div>
+        ${intv ? `
+          <div class="score-row"><span class="score-label">Language</span><span class="score-value">${intv.language_score || '—'} / 5</span></div>
+          <div class="score-row"><span class="score-label">Comprehension</span><span class="score-value">${intv.comprehension_score || '—'} / 5</span></div>
+          <div class="score-row"><span class="score-label">Maturity</span><span class="score-value">${intv.maturity_score || '—'} / 5</span></div>
+          <div class="score-row"><span class="score-label">Total</span><span class="score-value">${intv.interview_total || 0} / 15</span></div>
+          ${intv.grade_recommendation ? `<div style="margin-top:0.6rem; font-size:0.82rem; color:var(--muted);">Interviewer suggested: <strong>${intv.grade_recommendation}</strong></div>` : ''}
+          ${intv.notes ? `<div style="margin-top:0.6rem; font-size:0.82rem; color:var(--muted); font-style:italic;">"${intv.notes}"</div>` : ''}
+        ` : `
+          <p style="color:var(--muted); font-size:0.85rem; font-style:italic;">No interview conducted.</p>
+          <button class="btn btn-secondary" style="margin-top:0.75rem; font-size:0.78rem; padding:0.4rem 0.9rem;"
+            onclick="showInterviewForm()">+ Log Interview</button>
+        `}
+      </div>
+
+      <!-- COMPOSITE -->
+      <div class="info-card">
+        <div class="info-card-title">Composite Score</div>
+        ${d ? `
+          <div class="score-row"><span class="score-label">Math (40%)</span><span class="score-value">${d.math_score?.toFixed(1) || '—'}%</span></div>
+          <div class="score-row"><span class="score-label">English (40%)</span><span class="score-value">${d.english_score?.toFixed(1) || '—'}%</span></div>
+          <div class="score-row"><span class="score-label">Interview (20%)</span><span class="score-value">${d.interview_score?.toFixed(1) || 'N/A'}%</span></div>
+          <div style="margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid var(--cream);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+              <span style="font-size:0.78rem; color:var(--muted);">Composite</span>
+              <span style="font-family:'DM Mono',monospace; font-weight:600;">${d.composite_score?.toFixed(1) || '—'}%</span>
+            </div>
+            <div class="score-bar-wrap"><div class="score-bar" style="width:${d.composite_score || 0}%"></div></div>
+          </div>
+        ` : `<p style="color:var(--muted); font-style:italic; font-size:0.85rem;">Run the decision engine to compute scores.</p>`}
+      </div>
+    </div>
+
+    <!-- INTERVIEW FORM (hidden by default) -->
+    <div id="interviewFormSection" style="display:none;" class="info-card full" style="margin-bottom:1.25rem;">
+      <div class="info-card-title">Log Interview Results</div>
+      <div class="interview-rubric">
+        <div class="rubric-field">
+          <label>Language (1–5)</label>
+          <select id="iLang">
+            <option value="">—</option>
+            <option value="1">1 — Minimal</option>
+            <option value="2">2 — Basic</option>
+            <option value="3">3 — Adequate</option>
+            <option value="4">4 — Good</option>
+            <option value="5">5 — Excellent</option>
+          </select>
+        </div>
+        <div class="rubric-field">
+          <label>Comprehension (1–5)</label>
+          <select id="iComp">
+            <option value="">—</option>
+            <option value="1">1 — Minimal</option>
+            <option value="2">2 — Basic</option>
+            <option value="3">3 — Adequate</option>
+            <option value="4">4 — Good</option>
+            <option value="5">5 — Excellent</option>
+          </select>
+        </div>
+        <div class="rubric-field">
+          <label>Maturity (1–5)</label>
+          <select id="iMat">
+            <option value="">—</option>
+            <option value="1">1 — Minimal</option>
+            <option value="2">2 — Basic</option>
+            <option value="3">3 — Adequate</option>
+            <option value="4">4 — Good</option>
+            <option value="5">5 — Excellent</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0.75rem;">
+        <label>Grade Recommendation</label>
+        <input type="text" id="iGrade" placeholder="e.g. Grade 5">
+      </div>
+      <div class="field" style="margin-bottom:0.75rem;">
+        <label>Notes / Observations</label>
+        <textarea id="iNotes" rows="2" placeholder="Observations from the interview…"></textarea>
+      </div>
+      <div style="display:flex; gap:0.75rem;">
+        <button class="btn btn-confirm" onclick="saveInterview()">Save Interview</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('interviewFormSection').style.display='none'">Cancel</button>
+      </div>
+    </div>
+
+    <!-- PLACEMENT DECISION -->
+    ${a.placement_status === 'confirmed' ? `
+      <div class="confirmed-box">
+        <h3>✅ Placement Confirmed</h3>
+        <p>Final grade: <strong>${d?.final_grade || '—'}</strong></p>
+        ${d?.transcript_review_note ? `<p style="margin-top:0.35rem;">Transcript note: ${d.transcript_review_note}</p>` : ''}
+      </div>
+    ` : d ? `
+      <div class="decision-card action">
+        <div class="decision-title">Placement Decision</div>
+
+        <div class="suggested-grade">
+          <div>
+            <div class="suggested-label">System Recommendation</div>
+            <div class="suggested-value">${d.suggested_grade || 'Manual Review Required'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="suggested-label">Current Final Grade</div>
+            <div style="font-family:'DM Mono',monospace; font-size:1rem; font-weight:600;">${d.final_grade || '—'}</div>
+          </div>
+        </div>
+
+        ${showOverrideField ? `
+          <div class="field" style="margin-bottom:0.75rem;">
+            <label>Override Grade</label>
+            <input type="text" id="overrideGrade" placeholder="e.g. Grade 6" value="${d.final_grade || ''}">
+          </div>
+          <div class="field" style="margin-bottom:0.75rem;">
+            <label>Reason for Override <span style="color:var(--rust);">*</span></label>
+            <textarea id="overrideReason" rows="2" placeholder="Required: explain why the system recommendation is being overridden…"></textarea>
+          </div>
+        ` : ''}
+
+        <div class="btn-row">
+          <button class="btn btn-confirm" onclick="confirmPlacement()">✓ Confirm as Provisional</button>
+          <button class="btn btn-override" onclick="toggleOverride()">
+            ${showOverrideField ? 'Save Override' : '✏ Override Grade'}
+          </button>
+          ${showOverrideField ? `<button class="btn btn-secondary" onclick="cancelOverride()">Cancel</button>` : ''}
+        </div>
+
+        <!-- TRANSCRIPT SECTION -->
+        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--cream);">
+          <div style="font-family:'DM Mono',monospace; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--teal); margin-bottom:0.75rem;">Transcript Review</div>
+          ${a.transcript_available ? `
+            <div class="field" style="margin-bottom:0.75rem;">
+              <label>Transcript Review Note</label>
+              <textarea id="transcriptNote" rows="2" placeholder="Note after comparing placement with transcript…">${d.transcript_review_note || ''}</textarea>
+            </div>
+            <button class="btn btn-confirm" onclick="confirmFinal()">✅ Confirm Final Placement</button>
+          ` : `
+            <p style="font-size:0.84rem; color:var(--muted); font-style:italic;">
+              Awaiting transcript. Placement remains provisional until transcript is reviewed.
+            </p>
+            <div class="field" style="margin-top:0.75rem;">
+              <label>Mark Transcript as Received</label>
+            </div>
+            <button class="btn btn-secondary" onclick="markTranscriptReceived()">📎 Mark Transcript Received</button>
+          `}
+        </div>
+      </div>
+    ` : `
+      <div class="decision-card">
+        <div class="decision-title">No Placement Decision Yet</div>
+        <p style="font-size:0.88rem; color:var(--muted); margin-bottom:1rem;">
+          The student must complete their placement test before a decision can be generated.
+          Once submitted, click "Run Decision Engine" above.
+        </p>
+      </div>
+    `}
+  `
+}
+
+function renderTestScore(test) {
+  if (!test) return `<p style="color:var(--muted); font-size:0.85rem; font-style:italic;">Not taken yet.</p>`
+  const pct = test.percentage || 0
+  return `
+    <div class="score-row"><span class="score-label">Score</span><span class="score-value">${test.raw_score ?? '—'} marks</span></div>
+    <div class="score-row"><span class="score-label">Percentage</span><span class="score-value">${pct.toFixed(1)}%</span></div>
+    <div class="score-row"><span class="score-label">Status</span><span class="score-value" style="text-transform:capitalize;">${test.status}</span></div>
+    <div style="margin-top:0.5rem;">
+      <div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${pct>=65?'var(--teal)':pct>=50?'var(--gold)':'var(--rust)'}"></div></div>
+    </div>
+  `
+}
+
+// ── ACTIONS ──
+window.triggerDecisionEngine = async function() {
+  try {
+    await computePlacement(currentApplicant.id)
+    showAlert('success', 'Decision engine run successfully.')
+    await loadApplicants()
+    currentApplicant = allApplicants.find(a => a.id === currentApplicant.id)
+    renderDetail()
+  } catch (err) {
+    showAlert('error', 'Error: ' + err.message)
+  }
+}
+
+window.confirmPlacement = async function() {
+  const d = currentApplicant.placement_decisions?.[0]
+  if (!d) return
+
+  const { error } = await supabase
+    .from('placement_decisions')
+    .update({ status: 'provisional', approved_by: staff.id, approved_at: new Date().toISOString() })
+    .eq('id', d.id)
+
+  if (error) { showAlert('error', error.message); return }
+
+  await supabase.from('applicants').update({ placement_status: 'provisional' }).eq('id', currentApplicant.id)
+  await logAudit({ tableName: 'placement_decisions', recordId: d.id, action: 'confirmed_provisional',
+    newValue: { status: 'provisional', final_grade: d.final_grade }, notes: 'Academic staff confirmed provisional placement' })
+
+  showAlert('success', `Placement confirmed as Provisional — ${d.final_grade}`)
+  await loadApplicants()
+  currentApplicant = allApplicants.find(a => a.id === currentApplicant.id)
+  renderDetail()
+}
+
+window.toggleOverride = async function() {
+  if (!showOverrideField) {
+    showOverrideField = true
+    renderDetail()
+    return
+  }
+
+  // Save override
+  const grade  = document.getElementById('overrideGrade')?.value.trim()
+  const reason = document.getElementById('overrideReason')?.value.trim()
+  const d = currentApplicant.placement_decisions?.[0]
+
+  if (!grade || !reason) {
+    showAlert('error', 'Both override grade and reason are required.')
+    return
+  }
+
+  const { error } = await supabase
+    .from('placement_decisions')
+    .update({ final_grade: grade, override_reason: reason })
+    .eq('id', d.id)
+
+  if (error) { showAlert('error', error.message); return }
+
+  await logAudit({ tableName: 'placement_decisions', recordId: d.id, action: 'overridden',
+    oldValue: { final_grade: d.final_grade }, newValue: { final_grade: grade, override_reason: reason } })
+
+  showOverrideField = false
+  showAlert('success', `Grade overridden to: ${grade}`)
+  await loadApplicants()
+  currentApplicant = allApplicants.find(a => a.id === currentApplicant.id)
+  renderDetail()
+}
+
+window.cancelOverride = function() {
+  showOverrideField = false
+  renderDetail()
+}
+
+window.confirmFinal = async function() {
+  const d    = currentApplicant.placement_decisions?.[0]
+  const note = document.getElementById('transcriptNote')?.value.trim()
+
+  const { error } = await supabase
+    .from('placement_decisions')
+    .update({ status: 'confirmed', transcript_review_note: note || null,
+              transcript_reviewed_at: new Date().toISOString(),
+              approved_by: staff.id, approved_at: new Date().toISOString() })
+    .eq('id', d.id)
+
+  if (error) { showAlert('error', error.message); return }
+  await supabase.from('applicants').update({ placement_status: 'confirmed' }).eq('id', currentApplicant.id)
+
+  await logAudit({ tableName: 'placement_decisions', recordId: d.id, action: 'confirmed_final',
+    newValue: { status: 'confirmed', final_grade: d.final_grade } })
+
+  showAlert('success', `Final placement confirmed — ${d.final_grade}`)
+  await loadApplicants()
+  currentApplicant = allApplicants.find(a => a.id === currentApplicant.id)
+  renderDetail()
+}
+
+window.markTranscriptReceived = async function() {
+  await supabase.from('applicants').update({ transcript_available: true }).eq('id', currentApplicant.id)
+  currentApplicant.transcript_available = true
+  showAlert('success', 'Transcript marked as received.')
+  renderDetail()
+}
+
+window.showInterviewForm = function() {
+  document.getElementById('interviewFormSection').style.display = 'block'
+}
+
+window.saveInterview = async function() {
+  const lang = parseInt(document.getElementById('iLang').value)
+  const comp = parseInt(document.getElementById('iComp').value)
+  const mat  = parseInt(document.getElementById('iMat').value)
+  const grade= document.getElementById('iGrade').value.trim()
+  const notes= document.getElementById('iNotes').value.trim()
+
+  if (!lang || !comp || !mat) {
+    showAlert('error', 'Please fill in all three rubric scores.')
+    return
+  }
+
+  const { error } = await supabase.from('interview_records').insert({
+    applicant_id:            currentApplicant.id,
+    interviewer_id:          staff.id,
+    conducted_at:            new Date().toISOString(),
+    language_score:          lang,
+    comprehension_score:     comp,
+    maturity_score:          mat,
+    grade_recommendation:    grade || null,
+    notes:                   notes || null
+  })
+
+  if (error) { showAlert('error', error.message); return }
+
+  showAlert('success', 'Interview results saved.')
+  await loadApplicants()
+  currentApplicant = allApplicants.find(a => a.id === currentApplicant.id)
+  renderDetail()
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById('alert' + (type === 'success' ? 'Success' : 'Error'))
+  if (!el) return
+  el.textContent = msg
+  el.style.display = 'block'
+  setTimeout(() => { el.style.display = 'none' }, 4000)
+}
+
+init()
+</script>
+</body>
+</html>

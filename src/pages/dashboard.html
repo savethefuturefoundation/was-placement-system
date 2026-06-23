@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — WAAPC Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0f1117; --gold: #c8943a; --teal: #1d6b6e;
+    --paper: #f5f0e8; --cream: #ede7d4; --white: #fff;
+    --border: #d4cfc4; --muted: #7a7468; --rust: #a0432a;
+    --sidebar: 220px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar); background: var(--ink); display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand-tag { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.25rem; }
+  .sidebar-brand-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: white; line-height: 1.3; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem; text-decoration: none; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: white; border-left-color: var(--gold); background: rgba(200,148,58,0.08); }
+  .sidebar-user { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.6rem; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; flex-shrink: 0; }
+  .user-name { font-size: 0.8rem; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .sign-out-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; }
+  .sign-out-btn:hover { color: var(--rust); }
+  .main { margin-left: var(--sidebar); min-height: 100vh; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
+  .btn-primary { padding: 0.6rem 1.25rem; background: var(--ink); color: white; text-decoration: none; font-size: 0.85rem; font-weight: 500; border: none; cursor: pointer; transition: background 0.2s; }
+  .btn-primary:hover { background: var(--teal); }
+  .content { padding: 2rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--white); border: 1px solid var(--border); padding: 1.25rem 1.5rem; border-top: 3px solid var(--border); }
+  .stat-card.pending { border-top-color: var(--muted); }
+  .stat-card.provisional { border-top-color: var(--gold); }
+  .stat-card.flagged { border-top-color: var(--rust); }
+  .stat-card.confirmed { border-top-color: var(--teal); }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.25rem; }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .filter-btn { padding: 0.4rem 1rem; font-family: 'DM Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; border: 1.5px solid var(--border); background: var(--white); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+  .search-input { padding: 0.4rem 0.85rem; border: 1.5px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--ink); background: var(--white); outline: none; min-width: 220px; margin-left: auto; }
+  .search-input:focus { border-color: var(--teal); }
+  .table-wrap { background: var(--white); border: 1px solid var(--border); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--cream); }
+  th { padding: 0.75rem 1rem; text-align: left; font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); white-space: nowrap; }
+  td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--cream); font-size: 0.88rem; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #faf7f0; }
+  .badge { display: inline-block; padding: 0.2rem 0.5rem; font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 2px; }
+  .badge.pending { background: var(--cream); color: var(--muted); border: 1px solid var(--border); }
+  .badge.provisional { background: #fff8e6; color: #856404; border: 1px solid #ffe08a; }
+  .badge.flagged { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+  .badge.confirmed { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+  .action-link { color: var(--teal); text-decoration: none; font-size: 0.82rem; font-weight: 500; white-space: nowrap; }
+  .action-link:hover { color: var(--ink); }
+  .empty-state { padding: 4rem 2rem; text-align: center; color: var(--muted); }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  @media(max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } .stats-row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-tag">Placement System</div>
+    <div class="sidebar-brand-name">WAAPC<br>American School</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" href="dashboard.html"><span>📋</span> Dashboard</a>
+    <a class="nav-item" href="applicant-new.html"><span>➕</span> New Applicant</a>
+    <a class="nav-item" href="assessment-builder.html"><span>📝</span> Assessments</a>
+    <a class="nav-item" href="placement-review.html"><span>⚖️</span> Placements</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">—</div>
+    <div class="user-name" id="userName">…</div>
+    <button class="sign-out-btn" onclick="handleSignOut()">↩</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>Applicant Pipeline</h1>
+    <a class="btn-primary" href="applicant-new.html">+ New Applicant</a>
+  </div>
+
+  <div class="content">
+    <div class="stats-row">
+      <div class="stat-card pending"><div class="stat-num" id="statPending">—</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card provisional"><div class="stat-num" id="statProvisional">—</div><div class="stat-label">Provisional</div></div>
+      <div class="stat-card flagged"><div class="stat-num" id="statFlagged">—</div><div class="stat-label">Flagged</div></div>
+      <div class="stat-card confirmed"><div class="stat-num" id="statConfirmed">—</div><div class="stat-label">Confirmed</div></div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+      <button class="filter-btn" onclick="setFilter('provisional', this)">Provisional</button>
+      <button class="filter-btn" onclick="setFilter('flagged', this)">Flagged</button>
+      <button class="filter-btn" onclick="setFilter('confirmed', this)">Confirmed</button>
+      <input class="search-input" type="text" placeholder="Search by name…" oninput="searchApplicants(this.value)">
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Age Band</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th>Placement</th>
+            <th>Test Progress</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="applicantTable">
+          <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:3rem; font-style:italic;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { supabase, requireAuth, getCurrentStaff, signOut } from '../lib/supabase.js'
+
+let allApplicants = []
+let currentFilter = 'all'
+let currentSearch = ''
+let staff = null
+
+window.handleSignOut = signOut
+
+async function init() {
+  await requireAuth()
+  staff = await getCurrentStaff()
+  if (!staff) return
+  document.getElementById('userAvatar').textContent = staff.full_name.charAt(0).toUpperCase()
+  document.getElementById('userName').textContent = staff.full_name
+  await loadApplicants()
+}
+
+async function loadApplicants() {
+  const { data, error } = await supabase
+    .from('applicants')
+    .select(`
+      id, full_name, age_band, placement_status, created_at,
+      placement_decisions(suggested_grade, final_grade, composite_score),
+      test_sessions(id, status, assessments(subject))
+    `)
+    .order('created_at', { ascending: false })
+
+  if (error) { console.error(error); return }
+  allApplicants = data || []
+  updateStats()
+  renderTable()
+}
+
+function updateStats() {
+  document.getElementById('statPending').textContent = allApplicants.filter(a => a.placement_status === 'pending').length
+  document.getElementById('statProvisional').textContent = allApplicants.filter(a => a.placement_status === 'provisional').length
+  document.getElementById('statFlagged').textContent = allApplicants.filter(a => a.placement_status === 'flagged').length
+  document.getElementById('statConfirmed').textContent = allApplicants.filter(a => a.placement_status === 'confirmed').length
+}
+
+function renderTable() {
+  let list = allApplicants
+  if (currentFilter !== 'all') list = list.filter(a => a.placement_status === currentFilter)
+  if (currentSearch) list = list.filter(a => a.full_name.toLowerCase().includes(currentSearch.toLowerCase()))
+
+  const tbody = document.getElementById('applicantTable')
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><p>No applicants found.</p></div></td></tr>'
+    return
+  }
+
+  tbody.innerHTML = list.map(a => {
+    const d = a.placement_decisions?.[0]
+    const sessions = a.test_sessions || []
+    const submitted = sessions.filter(s => s.status === 'submitted' || s.status === 'graded').length
+    const total = sessions.length
+    const grade = d?.final_grade || d?.suggested_grade || '—'
+    const created = new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;">${a.full_name}</div>
+      </td>
+      <td><span style="font-family:'DM Mono',monospace; font-size:0.8rem;">${a.age_band || '—'}</span></td>
+      <td style="color:var(--muted); font-size:0.82rem;">${created}</td>
+      <td><span class="badge ${a.placement_status}">${a.placement_status}</span></td>
+      <td style="font-family:'DM Mono',monospace; font-size:0.82rem;">${grade}</td>
+      <td>
+        ${total > 0 ? `
+          <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.25rem;">${submitted}/${total} subjects ${submitted===total?'✅':''}</div>
+          <div style="height:4px; background:var(--cream); border-radius:2px;">
+            <div style="height:100%; width:${total>0?(submitted/total*100):0}%; background:var(--teal); border-radius:2px;"></div>
+          </div>
+        ` : '<span style="font-size:0.78rem; color:var(--muted);">Not started</span>'}
+      </td>
+      <td>
+        <a class="action-link" href="applicant-detail.html?id=${a.id}">View →</a>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+window.setFilter = function(filter, btn) {
+  currentFilter = filter
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderTable()
+}
+
+window.searchApplicants = function(val) {
+  currentSearch = val
+  renderTable()
+}
+
+// Auto-refresh every 30 seconds
+setInterval(loadApplicants, 30000)
+
+init()
+</script>
+</body>
+</html>

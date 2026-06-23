@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placement Test — WAAPC American School</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0f1117; --gold: #c8943a; --teal: #1d6b6e;
+    --paper: #f5f0e8; --white: #fff; --border: #d4cfc4;
+    --muted: #7a7468; --rust: #a0432a;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  #screenLoading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1rem; color: var(--muted); font-style: italic; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #screenError { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; }
+  .error-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .error-msg { color: var(--muted); max-width: 400px; line-height: 1.6; }
+  .lang-toggle { display: flex; justify-content: center; margin-bottom: 1.25rem; border: 1.5px solid var(--border); width: fit-content; margin-left: auto; margin-right: auto; }
+  .lang-btn { padding: 0.4rem 1.1rem; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer; background: var(--white); color: var(--muted); border: none; transition: all 0.15s; }
+  .lang-btn.active { background: var(--teal); color: white; }
+  .lang-toggle-fixed { position: fixed; top: 0.6rem; right: 1rem; z-index: 70; display: flex; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden; }
+  .lang-toggle-fixed .lang-btn { padding: 0.3rem 0.7rem; font-size: 0.7rem; background: rgba(255,255,255,0.08); color: #cfc9bd; }
+  .lang-toggle-fixed .lang-btn.active { background: var(--gold); color: var(--ink); }
+  #screenIntro { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+  #screenIntro.active { display: flex; }
+  .intro-card { background: var(--white); max-width: 560px; width: 100%; padding: 3rem; border-top: 4px solid var(--gold); }
+  .school-tag { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.5rem; text-align: center; }
+  .intro-card h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 1rem; line-height: 1.2; text-align: center; }
+  .student-greeting { background: var(--paper); border: 1px solid var(--border); padding: 0.75rem 1rem; margin: 1.25rem 0; font-size: 0.9rem; }
+  .student-greeting strong { color: var(--teal); }
+  .subject-pills { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; flex-wrap: wrap; }
+  .subject-pill { font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.75rem; border-radius: 2px; }
+  .pill-math { background: #e8f0ff; color: #1e40af; }
+  .pill-english { background: #fef3e8; color: #92400e; }
+  .pill-general { background: #ecfdf5; color: #065f46; }
+  .rules { list-style: none; margin: 1rem 0 1.5rem; }
+  .rules li { padding: 0.4rem 0; padding-left: 1.5rem; position: relative; font-size: 0.9rem; border-bottom: 1px dashed var(--border); }
+  .rules li:last-child { border-bottom: none; }
+  .rules li::before { content: '→'; position: absolute; left: 0; color: var(--gold); }
+  .btn-start { width: 100%; padding: 1rem; background: var(--teal); color: var(--white); border: none; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+  .btn-start:hover { background: var(--ink); }
+  .test-header { background: var(--ink); color: var(--white); padding: 0.9rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .test-title { font-family: 'Playfair Display', serif; font-size: 1rem; }
+  .test-subtitle { font-size: 0.72rem; color: #8a8278; margin-top: 0.1rem; }
+  .timer-display { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; background: rgba(200,148,58,0.2); border: 1px solid rgba(200,148,58,0.4); color: var(--gold); padding: 0.35rem 0.75rem; }
+  .timer-display.warning { background: rgba(160,67,42,0.3); border-color: var(--rust); color: #f87171; }
+  .progress-bar-wrap { background: #ede7d4; height: 4px; }
+  .progress-bar { height: 100%; background: var(--teal); transition: width 0.3s ease; }
+  .subject-header { background: var(--cream); padding: 0.5rem 2rem; font-family: 'DM Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); border-bottom: 1px solid var(--border); }
+  #screenTest { display: none; }
+  #screenTest.active { display: block; }
+  .question-area { max-width: 720px; margin: 0 auto; padding: 2.5rem 2rem; }
+  .question-counter { font-family: 'DM Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; }
+  .question-text { font-size: 1.1rem; font-weight: 400; line-height: 1.7; margin-bottom: 0.5rem; }
+  .question-text-secondary { font-size: 0.95rem; font-style: italic; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border); }
+  .skill-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; background: #ede7d4; color: var(--muted); padding: 0.2rem 0.5rem; border-radius: 2px; margin-bottom: 1rem; }
+  .options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2rem; }
+  .option { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1rem; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .option.selected { border-color: var(--teal); background: #e8f4f5; }
+  .option-letter { font-family: 'DM Mono', monospace; font-size: 0.8rem; width: 26px; height: 26px; border-radius: 50%; background: #ede7d4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--muted); }
+  .option.selected .option-letter { background: var(--teal); color: var(--white); }
+  .option-text { font-size: 0.95rem; }
+  .option-text-fr { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 0.1rem; }
+  .short-answer { width: 100%; padding: 0.85rem 1rem; border: 1.5px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink); background: var(--white); outline: none; resize: none; margin-bottom: 2rem; }
+  .short-answer:focus { border-color: var(--teal); }
+  .question-nav { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 1rem; gap: 0.5rem; }
+  .btn-nav { padding: 0.65rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: var(--white); color: var(--ink); transition: all 0.15s; flex-shrink: 0; }
+  .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-submit { padding: 0.65rem 1.5rem; background: var(--teal); color: var(--white); border: none; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+  .question-dots { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; padding: 0.75rem 1.5rem; background: #ede7d4; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); cursor: pointer; }
+  .dot.answered { background: var(--teal); }
+  .dot.current { background: var(--gold); }
+  .dot.subject-break { width: 2px; height: 9px; border-radius: 1px; background: var(--muted); cursor: default; margin: 0 2px; }
+  #screenDone { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; }
+  #screenDone.active { display: flex; }
+  .done-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .done-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 0.75rem; }
+  .done-msg { color: var(--muted); max-width: 420px; line-height: 1.7; }
+  .done-summary { margin-top: 1.5rem; background: var(--white); border: 1px solid var(--border); padding: 1.25rem; max-width: 420px; width: 100%; text-align: left; }
+  .done-summary-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed var(--border); font-size: 0.88rem; }
+  .done-summary-row:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle-fixed" id="langToggleFixed" style="display:none;">
+  <button class="lang-btn active" id="fixedLangEN" data-action="lang" data-lang="en">EN</button>
+  <button class="lang-btn" id="fixedLangFR" data-action="lang" data-lang="fr">FR</button>
+</div>
+
+<div id="screenLoading" class="screen active">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Verifying your access link… / Verification du lien d'acces…</p>
+</div>
+
+<div id="screenError" class="screen" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:2rem; text-align:center;">
+  <div style="font-size:3rem; margin-bottom:1rem;">⛔</div>
+  <div class="error-title">Access Denied / Accès Refusé</div>
+  <div class="error-msg" id="errorText"></div>
+</div>
+
+<div id="screenIntro" class="screen">
+  <div class="intro-card">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="introLangEN" data-action="lang" data-lang="en">English</button>
+      <button class="lang-btn" id="introLangFR" data-action="lang" data-lang="fr">Français</button>
+    </div>
+    <div class="school-tag">WAAPC American School</div>
+    <h1 id="introTitle">Placement Test</h1>
+    <div class="student-greeting">
+      <span id="welcomeText">Welcome,</span> <strong id="studentNameDisplay">Student</strong>!<br>
+      <span style="font-size:0.85rem; color:var(--muted);" id="readRulesText">Please read the instructions below before starting.</span>
+    </div>
+    <div class="subject-pills">
+      <span class="subject-pill pill-math" id="pillMath">Math</span>
+      <span class="subject-pill pill-english" id="pillEnglish">English</span>
+      <span class="subject-pill pill-general" id="pillGeneral">General Paper</span>
+    </div>
+    <ul class="rules" id="rulesList"></ul>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem;" id="testMetaText"></p>
+    <button class="btn-start" id="beginBtn" data-action="begin">Begin Test →</button>
+  </div>
+</div>
+
+<div id="screenTest" class="screen">
+  <div class="test-header">
+    <div>
+      <div class="test-title" id="testTitleHeader">—</div>
+      <div class="test-subtitle" id="studentNameHeader">—</div>
+    </div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  <div class="subject-header" id="subjectHeader"></div>
+  <div class="question-dots" id="questionDots"></div>
+  <div class="question-area" id="questionArea"></div>
+</div>
+
+<div id="screenDone" class="screen">
+  <div class="done-icon">✅</div>
+  <div class="done-title" id="doneTitle">Test Submitted!</div>
+  <div class="done-msg" id="doneMsg"></div>
+  <div class="done-summary" id="doneSummary"></div>
+</div>
+
+<script type="module">
+import { supabase, validateToken, consumeToken, gradeSession } from '../lib/supabase.js'
+
+// ── STATE ──
+let tokenData = null
+let assessments = []   // all 3 assessments
+let allQuestions = []  // combined flat array with assessmentId tagged
+let answers = {}
+let currentIndex = 0
+let sessionIds = {}    // { assessmentId: sessionId }
+let timerInterval = null
+let secondsLeft = 0
+let currentLang = 'en'
+let started = false
+
+const SUBJ_LABELS = {
+  en: { math: 'Mathematics', english: 'English Language', general_paper: 'General Paper' },
+  fr: { math: 'Mathématiques', english: 'Anglais', general_paper: 'Épreuve Générale' }
+}
+
+const T = {
+  en: {
+    title: 'Placement Test', welcome: 'Welcome,',
+    readRules: 'Please read the instructions below before starting.',
+    begin: 'Begin Test →',
+    rules: [
+      'Find a quiet place with a stable internet connection',
+      'You will have <strong id="tld"></strong> to complete all 3 subjects',
+      'The test will <strong>automatically submit and close</strong> when time runs out',
+      'Do not refresh the page during the test — your progress will be lost',
+      'Answer all questions to the best of your ability',
+      'You cannot re-take this test once submitted'
+    ],
+    total: 'Total questions:', time: 'Time allowed:', mins: 'minutes',
+    prev: '← Previous', next: 'Next →', submit: 'Submit Test ✓',
+    answered: 'answered', yourAnswer: 'Your answer…', writeAnswer: 'Write your answer here…',
+    doneTitle: 'Test Submitted!',
+    doneMsg: 'Thank you. The school will review your results and contact your parent or guardian shortly.',
+    timeUpTitle: 'Time\'s Up!',
+    timeUpMsg: 'Your time ended and the test was automatically submitted. Thank you.',
+    subjectComplete: 'Subject complete — continue to next section'
+  },
+  fr: {
+    title: 'Test de Placement', welcome: 'Bienvenue,',
+    readRules: 'Veuillez lire les instructions avant de commencer.',
+    begin: 'Commencer le Test →',
+    rules: [
+      'Trouve un endroit calme avec une connexion internet stable',
+      'Tu auras <strong id="tld"></strong> pour compléter les 3 matières',
+      'Le test se <strong>soumettra automatiquement</strong> quand le temps sera écoulé',
+      'Ne rafraîchis pas la page pendant le test',
+      'Réponds à toutes les questions du mieux que tu peux',
+      'Tu ne peux pas repasser ce test une fois soumis'
+    ],
+    total: 'Total de questions :', time: 'Temps accordé :', mins: 'minutes',
+    prev: '← Précédent', next: 'Suivant →', submit: 'Soumettre le Test ✓',
+    answered: 'répondu', yourAnswer: 'Ta réponse…', writeAnswer: 'Écris ta réponse ici…',
+    doneTitle: 'Test Soumis !',
+    doneMsg: 'Merci. L\'école examinera tes résultats et contactera ton parent ou tuteur prochainement.',
+    timeUpTitle: 'Temps Écoulé !',
+    timeUpMsg: 'Ton temps est terminé et le test a été soumis automatiquement. Merci.',
+    subjectComplete: 'Matière terminée — continuer à la section suivante'
+  }
+}
+
+// ── SCREENS ──
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; s.classList.remove('active') })
+  const el = document.getElementById(id)
+  const flexScreens = ['screenIntro', 'screenDone', 'screenError']
+  el.style.display = flexScreens.includes(id) ? 'flex' : 'block'
+  el.classList.add('active')
+  document.getElementById('langToggleFixed').style.display = (id === 'screenTest') ? 'flex' : 'none'
+}
+
+function showError(msg) {
+  document.getElementById('errorText').textContent = msg
+  show('screenError')
+}
+
+// ── LANGUAGE ──
+function setLang(lang) {
+  currentLang = lang
+  document.querySelectorAll('[data-action="lang"]').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang)
+  })
+  const t = T[lang]
+  const el = id => document.getElementById(id)
+  if (el('introTitle')) el('introTitle').textContent = t.title
+  if (el('welcomeText')) el('welcomeText').textContent = t.welcome
+  if (el('readRulesText')) el('readRulesText').textContent = t.readRules
+  if (el('beginBtn')) el('beginBtn').textContent = t.begin
+  if (el('rulesList') && assessments.length) {
+    el('rulesList').innerHTML = t.rules.map(r => `<li>${r}</li>`).join('')
+    const tld = document.getElementById('tld')
+    if (tld) tld.textContent = totalMinutes() + ' ' + t.mins
+  }
+  if (el('testMetaText') && assessments.length) {
+    el('testMetaText').textContent = t.total + ' ' + allQuestions.length + '  |  ' + t.time + ' ' + totalMinutes() + ' ' + t.mins
+  }
+  if (el('pillMath')) el('pillMath').textContent = SUBJ_LABELS[lang].math
+  if (el('pillEnglish')) el('pillEnglish').textContent = SUBJ_LABELS[lang].english
+  if (el('pillGeneral')) el('pillGeneral').textContent = SUBJ_LABELS[lang].general_paper
+  if (started) renderQuestion(currentIndex)
+}
+
+function totalMinutes() {
+  return assessments.reduce((s, a) => s + a.time_limit_mins, 0)
+}
+
+// ── INIT ──
+async function init() {
+  const token = new URLSearchParams(window.location.search).get('token')
+  if (!token) { showError('No access token found in this link.'); return }
+
+  try {
+    tokenData = await validateToken(token)
+    if (!tokenData) { showError('This link is invalid, expired, or has already been used. / Ce lien est invalide, expiré ou a déjà été utilisé.'); return }
+
+    const band = tokenData.applicants.age_band
+
+    // Load ALL active assessments for this grade band (all 3 subjects)
+    const { data, error } = await supabase
+      .from('assessments')
+      .select('*, questions(*)')
+      .eq('grade_band', band)
+      .eq('is_active', true)
+      .order('subject')
+
+    if (error || !data || data.length === 0) {
+      showError('No placement tests have been assigned for your grade level yet. Please contact the admissions office.')
+      return
+    }
+
+    assessments = data
+    // Build flat combined question array with assessment reference
+    allQuestions = []
+    assessments.forEach(a => {
+      const sorted = [...(a.questions || [])].sort((x,y) => x.order_index - y.order_index)
+      sorted.forEach(q => { allQuestions.push({ ...q, _assessmentId: a.id, _subject: a.subject }) })
+    })
+
+    if (allQuestions.length === 0) { showError('No questions found. Please contact the admissions office.'); return }
+
+    secondsLeft = totalMinutes() * 60
+    document.getElementById('studentNameDisplay').textContent = tokenData.applicants.full_name
+    setLang('en')
+    show('screenIntro')
+  } catch(err) {
+    showError('An error occurred: ' + err.message)
+  }
+}
+
+// ── START TEST ──
+async function startTest() {
+  started = true
+  // Create one session per assessment
+  for (const a of assessments) {
+    const { data, error } = await supabase
+      .from('test_sessions')
+      .insert({ applicant_id: tokenData.applicant_id, assessment_id: a.id, token_id: tokenData.id, status: 'in_progress' })
+      .select().single()
+    if (error) { showError('Could not start test: ' + error.message); return }
+    sessionIds[a.id] = data.id
+  }
+
+  document.getElementById('testTitleHeader').textContent = 'WAAPC American School — Placement Test'
+  document.getElementById('studentNameHeader').textContent = tokenData.applicants.full_name
+
+  renderDots()
+  show('screenTest')
+  renderQuestion(0)
+  startTimer()
+}
+
+// ── RENDER QUESTION ──
+function renderQuestion(index) {
+  currentIndex = index
+  const q = allQuestions[index]
+  const t = T[currentLang]
+  const area = document.getElementById('questionArea')
+
+  // Update progress
+  document.getElementById('progressBar').style.width = (((index+1)/allQuestions.length)*100) + '%'
+
+  // Update subject header
+  const subjectHeader = document.getElementById('subjectHeader')
+  const subjLabel = SUBJ_LABELS[currentLang][q._subject] || q._subject
+  subjectHeader.textContent = subjLabel + ' — ' + (currentLang==='en'?'Question':'Question') + ' ' + (index+1) + ' / ' + allQuestions.length
+  subjectHeader.style.background = q._subject==='math'?'#e8f0ff':q._subject==='english'?'#fef3e8':'#ecfdf5'
+  subjectHeader.style.color = q._subject==='math'?'#1e40af':q._subject==='english'?'#92400e':'#065f46'
+
+  updateDots()
+
+  const mainText = currentLang==='en' ? q.question_text : (q.question_text_fr || q.question_text)
+  const secText = currentLang==='en' ? q.question_text_fr : q.question_text
+
+  let html = `
+    <div class="question-counter">${t.answered.toUpperCase()} ${Object.keys(answers).length} / ${allQuestions.length}</div>
+    ${q.skill_tag ? `<span class="skill-tag">${q.skill_tag}</span>` : ''}
+    <div class="question-text">${mainText}</div>
+    ${secText && secText !== mainText ? `<div class="question-text-secondary">${secText}</div>` : ''}
+  `
+
+  if (q.question_type === 'mcq' && q.options) {
+    const optsEN = Array.isArray(q.options) ? q.options : JSON.parse(q.options)
+    const optsFR = q.options_fr ? (Array.isArray(q.options_fr) ? q.options_fr : JSON.parse(q.options_fr)) : null
+    const displayMain = currentLang==='en' ? optsEN : (optsFR || optsEN)
+    const displaySec = currentLang==='en' ? optsFR : optsEN
+    const letters = ['A','B','C','D','E']
+    html += '<div class="options">'
+    displayMain.forEach((opt, i) => {
+      const sel = answers[q.id] === letters[i] ? 'selected' : ''
+      html += `<div class="option ${sel}" data-action="mcq" data-qid="${q.id}" data-letter="${letters[i]}">
+        <div class="option-letter">${letters[i]}</div>
+        <div><div class="option-text">${opt}</div>${displaySec ? `<div class="option-text-fr">${displaySec[i]}</div>` : ''}</div>
+      </div>`
+    })
+    html += '</div>'
+  } else {
+    const val = answers[q.id] || ''
+    html += `<textarea class="short-answer" rows="${q.question_type==='essay'?8:3}" placeholder="${q.question_type==='essay'?t.writeAnswer:t.yourAnswer}" data-action="text" data-qid="${q.id}">${val}</textarea>`
+  }
+
+  const isLast = index === allQuestions.length - 1
+  html += `<div class="question-nav">
+    <button class="btn-nav" data-action="prev" data-index="${index-1}" ${index===0?'disabled':''}>${t.prev}</button>
+    <span style="font-size:0.75rem; color:var(--muted);">${Object.keys(answers).length} / ${allQuestions.length} ${t.answered}</span>
+    ${isLast ? `<button class="btn-submit" data-action="submit">${t.submit}</button>` : `<button class="btn-nav" data-action="next" data-index="${index+1}">${t.next}</button>`}
+  </div>`
+
+  area.innerHTML = html
+
+  // Re-attach textarea listener
+  const ta = area.querySelector('textarea[data-action="text"]')
+  if (ta) ta.addEventListener('input', e => { answers[q.id] = e.target.value; updateDots() })
+}
+
+// ── DOTS ──
+function renderDots() {
+  const container = document.getElementById('questionDots')
+  let html = ''
+  let lastSubject = null
+  allQuestions.forEach((q, i) => {
+    if (lastSubject && q._subject !== lastSubject) {
+      html += '<div class="dot subject-break"></div>'
+    }
+    html += `<div class="dot" id="dot-${i}" data-action="goto" data-index="${i}" title="Q${i+1}"></div>`
+    lastSubject = q._subject
+  })
+  container.innerHTML = html
+}
+
+function updateDots() {
+  allQuestions.forEach((q, i) => {
+    const dot = document.getElementById('dot-' + i)
+    if (!dot) return
+    dot.className = 'dot'
+    if (i === currentIndex) dot.classList.add('current')
+    else if (answers[q.id]) dot.classList.add('answered')
+  })
+}
+
+// ── TIMER ──
+function startTimer() {
+  updateTimerDisplay()
+  timerInterval = setInterval(() => {
+    secondsLeft--
+    updateTimerDisplay()
+    if (secondsLeft <= 0) { clearInterval(timerInterval); submitTest(true) }
+  }, 1000)
+}
+
+function updateTimerDisplay() {
+  const mins = Math.floor(secondsLeft/60).toString().padStart(2,'0')
+  const secs = (secondsLeft%60).toString().padStart(2,'0')
+  const el = document.getElementById('timerDisplay')
+  el.textContent = mins + ':' + secs
+  if (secondsLeft <= 300) el.classList.add('warning')
+}
+
+// ── SUBMIT ──
+function confirmSubmit() {
+  const unanswered = allQuestions.length - Object.keys(answers).length
+  const msg = unanswered > 0
+    ? (currentLang==='en' ? `${unanswered} question(s) unanswered. Submit anyway?` : `${unanswered} question(s) sans réponse. Soumettre quand même ?`)
+    : (currentLang==='en' ? 'Submit your test?' : 'Soumettre le test ?')
+  if (confirm(msg)) submitTest(false)
+}
+
+async function submitTest(auto) {
+  clearInterval(timerInterval)
+  try {
+    // Save answers grouped by assessment
+    for (const a of assessments) {
+      const sid = sessionIds[a.id]
+      const qs = allQuestions.filter(q => q._assessmentId === a.id)
+      const rows = qs.map(q => ({ session_id: sid, question_id: q.id, answer_text: answers[q.id] || null }))
+      if (rows.length) await supabase.from('student_answers').insert(rows)
+      // Mark session submitted
+      await supabase.from('test_sessions').update({
+        submitted_at: new Date().toISOString(),
+        status: 'submitted',
+        time_remaining: secondsLeft
+      }).eq('id', sid)
+      // Grade the session
+      await gradeSession(sid)
+    }
+    // Mark token used
+    await consumeToken(tokenData.id)
+    // Update applicant status
+    await supabase.from('applicants').update({ placement_status: 'pending' }).eq('id', tokenData.applicant_id)
+
+    const t = T[currentLang]
+    document.getElementById('doneTitle').textContent = auto ? t.timeUpTitle : t.doneTitle
+    document.getElementById('doneMsg').textContent = auto ? t.timeUpMsg : t.doneMsg
+    // Show summary
+    const summary = assessments.map(a => {
+      const qs = allQuestions.filter(q => q._assessmentId === a.id)
+      const attempted = qs.filter(q => answers[q.id]).length
+      return `<div class="done-summary-row"><span>${SUBJ_LABELS[currentLang][a.subject]}</span><span>${attempted}/${qs.length} ${currentLang==='en'?'attempted':'tentées'}</span></div>`
+    }).join('')
+    document.getElementById('doneSummary').innerHTML = summary
+    show('screenDone')
+  } catch(err) {
+    alert('Error submitting: ' + err.message + '\nPlease contact the admissions office.')
+  }
+}
+
+// ── EVENT DELEGATION ──
+document.addEventListener('click', handleEvent)
+document.addEventListener('touchend', handleEvent, { passive: false })
+
+function handleEvent(e) {
+  const el = e.target.closest('[data-action]')
+  if (!el) return
+  e.preventDefault()
+  const action = el.dataset.action
+  if (action === 'lang') setLang(el.dataset.lang)
+  else if (action === 'begin') startTest()
+  else if (action === 'prev' && !el.disabled) renderQuestion(parseInt(el.dataset.index))
+  else if (action === 'next') renderQuestion(parseInt(el.dataset.index))
+  else if (action === 'goto') renderQuestion(parseInt(el.dataset.index))
+  else if (action === 'submit') confirmSubmit()
+  else if (action === 'mcq') {
+    const qid = el.dataset.qid
+    const letter = el.dataset.letter
+    answers[qid] = letter
+    document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'))
+    el.classList.add('selected')
+    updateDots()
+    const span = document.querySelector('.question-nav span')
+    if (span) span.textContent = Object.keys(answers).length + ' / ' + allQuestions.length + ' ' + T[currentLang].answered
+  }
+}
+
+init()
+</script>
+</body>
+</html>

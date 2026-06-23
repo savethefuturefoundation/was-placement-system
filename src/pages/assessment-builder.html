@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Builder — WAAPC Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --ink: #0f1117; --gold: #c8943a; --teal: #1d6b6e; --paper: #f5f0e8; --cream: #ede7d4; --white: #fff; --border: #d4cfc4; --muted: #7a7468; --sidebar: 220px; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar); background: var(--ink); display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand-tag { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.25rem; }
+  .sidebar-brand-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: white; line-height: 1.3; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem; text-decoration: none; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: white; border-left-color: var(--gold); background: rgba(200,148,58,0.08); }
+  .main { margin-left: var(--sidebar); min-height: 100vh; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
+  .content { padding: 2rem; }
+  .card { background: var(--white); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .card-title { font-family: 'DM Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--cream); }
+  .field { margin-bottom: 1rem; }
+  label { display: block; font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+  input, select, textarea { width: 100%; border: 1.5px solid var(--border); padding: 0.7rem 0.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--ink); background: var(--paper); outline: none; transition: border-color 0.2s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--teal); background: var(--white); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .btn { padding: 0.65rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: var(--ink); color: white; }
+  .btn-primary:hover { background: var(--teal); }
+  .btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); }
+  .assessment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .assessment-card { background: var(--white); border: 1px solid var(--border); padding: 1.25rem; }
+  .a-subject { font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+  .a-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem; }
+  .a-meta { font-size: 0.78rem; color: var(--muted); }
+  .badge-active { display: inline-block; background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; font-family: 'DM Mono', monospace; font-size: 0.55rem; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 2px; }
+  .badge-inactive { display: inline-block; background: var(--cream); color: var(--muted); border: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 0.55rem; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 2px; }
+  .alert { padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+  .alert.success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+  .alert.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+  @media(max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } .assessment-grid { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-tag">Placement System</div>
+    <div class="sidebar-brand-name">WAAPC<br>American School</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard.html"><span>📋</span> Dashboard</a>
+    <a class="nav-item" href="applicant-new.html"><span>➕</span> New Applicant</a>
+    <a class="nav-item active" href="assessment-builder.html"><span>📝</span> Assessments</a>
+    <a class="nav-item" href="placement-review.html"><span>⚖️</span> Placements</a>
+  </nav>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <h1>Assessment Builder</h1>
+  </div>
+  <div class="content">
+    <div class="alert success" id="alertSuccess"></div>
+    <div class="alert error" id="alertError"></div>
+
+    <div class="card">
+      <div class="card-title">All Assessments (21 loaded)</div>
+      <div class="assessment-grid" id="assessmentGrid">
+        <div style="color:var(--muted); font-style:italic; grid-column:1/-1;">Loading assessments…</div>
+      </div>
+    </div>
+  </div>
+</main>
+<script type="module">
+import { supabase, requireAuth, getCurrentStaff } from '../lib/supabase.js'
+
+async function init() {
+  await requireAuth()
+  await getCurrentStaff()
+  const { data } = await supabase.from('assessments').select('*, questions(count)').order('grade_band').order('subject')
+  if (!data) return
+  const grid = document.getElementById('assessmentGrid')
+  const subjectColors = { math: '#1e40af', english: '#92400e', general_paper: '#065f46' }
+  grid.innerHTML = data.map(a => {
+    const qcount = a.questions?.[0]?.count || 0
+    return `<div class="assessment-card">
+      <div class="a-subject" style="color:${subjectColors[a.subject]||'var(--muted)'}">${a.subject.replace('_',' ')}</div>
+      <div class="a-title">${a.title}</div>
+      <div class="a-meta">${a.grade_band} · ${a.time_limit_mins}min · ${qcount} questions</div>
+      <div style="margin-top:0.5rem;">${a.is_active ? '<span class="badge-active">Active</span>' : '<span class="badge-inactive">Inactive</span>'}</div>
+    </div>`
+  }).join('')
+}
+init()
+</script>
+</body>
+</html>
