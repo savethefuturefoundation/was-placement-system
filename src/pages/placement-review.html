@@ -323,20 +323,38 @@ window.selectApplicant = async function(id) {
   document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('selected'))
   document.getElementById('aitem-' + id)?.classList.add('selected')
   showOverrideField = false
-  // Always fetch fresh data when selecting an applicant
+  await loadAndRenderApplicant(id)
+}
+
+async function loadAndRenderApplicant(id) {
+  // Fetch applicant base data
   const { data: fresh } = await supabase
     .from('applicants')
     .select(`
       id, full_name, date_of_birth, age_band, parent_email,
       placement_status, transcript_available, notes, created_at,
-      placement_decisions(*),
       test_sessions(id, raw_score, percentage, status, submitted_at,
         assessments(title, title_fr, subject)),
       interview_records(*)
     `)
     .eq('id', id)
     .single()
-  currentApplicant = fresh || allApplicants.find(a => a.id === id)
+
+  // Fetch placement_decisions separately to avoid join issues
+  const { data: decisions } = await supabase
+    .from('placement_decisions')
+    .select('*')
+    .eq('applicant_id', id)
+
+  if (fresh) {
+    fresh.placement_decisions = decisions || []
+    currentApplicant = fresh
+    // Also update in allApplicants array
+    const idx = allApplicants.findIndex(a => a.id === id)
+    if (idx >= 0) allApplicants[idx] = fresh
+  } else {
+    currentApplicant = allApplicants.find(a => a.id === id)
+  }
   renderDetail()
 }
 
@@ -574,26 +592,7 @@ window.triggerDecisionEngine = async function() {
     await computePlacement(currentApplicant.id)
     showAlert('success', 'Decision engine run successfully.')
     await loadApplicants()
-    // Force fresh reload of this applicant with updated placement_decisions
-    const { data: fresh } = await supabase
-      .from('applicants')
-      .select(`
-        id, full_name, date_of_birth, age_band, parent_email,
-        placement_status, transcript_available, notes, created_at,
-        placement_decisions(*),
-        test_sessions(id, raw_score, percentage, status, submitted_at,
-          assessments(title, title_fr, subject)),
-        interview_records(*)
-      `)
-      .eq('id', currentApplicant.id)
-      .single()
-    if (fresh) {
-      currentApplicant = fresh
-      // Also update in allApplicants array
-      const idx = allApplicants.findIndex(a => a.id === fresh.id)
-      if (idx >= 0) allApplicants[idx] = fresh
-    }
-    renderDetail()
+    await loadAndRenderApplicant(currentApplicant.id)
   } catch (err) {
     showAlert('error', 'Error: ' + err.message)
   }
