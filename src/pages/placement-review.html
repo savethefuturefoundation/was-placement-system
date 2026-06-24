@@ -273,7 +273,7 @@ async function loadApplicants() {
       placement_status, transcript_available, notes, created_at,
       placement_decisions(*),
       test_sessions(id, raw_score, percentage, status, submitted_at,
-        assessments(title, subject)),
+        assessments(title, title_fr, subject)),
       interview_records(*)
     `)
     .order('created_at', { ascending: false })
@@ -339,6 +339,7 @@ function renderDetail() {
 
   const mathTest    = tests.find(t => t.assessments?.subject === 'math')
   const englishTest = tests.find(t => t.assessments?.subject === 'english')
+  const generalTest = tests.find(t => t.assessments?.subject === 'general_paper')
 
   right.innerHTML = `
     <div class="alert success" id="alertSuccess"></div>
@@ -375,6 +376,10 @@ function renderDetail() {
         <div class="info-card-title">English Test</div>
         ${renderTestScore(englishTest)}
       </div>
+      <div class="info-card">
+        <div class="info-card-title">General Paper Test</div>
+        ${renderTestScore(generalTest)}
+      </div>
 
       <!-- INTERVIEW -->
       <div class="info-card">
@@ -397,9 +402,10 @@ function renderDetail() {
       <div class="info-card">
         <div class="info-card-title">Composite Score</div>
         ${d ? `
-          <div class="score-row"><span class="score-label">Math (40%)</span><span class="score-value">${d.math_score?.toFixed(1) || '—'}%</span></div>
-          <div class="score-row"><span class="score-label">English (40%)</span><span class="score-value">${d.english_score?.toFixed(1) || '—'}%</span></div>
-          <div class="score-row"><span class="score-label">Interview (20%)</span><span class="score-value">${d.interview_score?.toFixed(1) || 'N/A'}%</span></div>
+          <div class="score-row"><span class="score-label">Math</span><span class="score-value">${d.math_score?.toFixed(1) || '—'}%</span></div>
+          <div class="score-row"><span class="score-label">English</span><span class="score-value">${d.english_score?.toFixed(1) || '—'}%</span></div>
+          <div class="score-row"><span class="score-label">General Paper</span><span class="score-value">${d.general_paper_score?.toFixed(1) || '—'}%</span></div>
+          <div class="score-row"><span class="score-label">Interview</span><span class="score-value">${d.interview_score?.toFixed(1) || 'N/A'}%</span></div>
           <div style="margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid var(--cream);">
             <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
               <span style="font-size:0.78rem; color:var(--muted);">Composite</span>
