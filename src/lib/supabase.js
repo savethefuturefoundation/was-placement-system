@@ -206,3 +206,8 @@ export async function logAudit({ tableName, recordId, action, oldValue, newValue
     changed_by: staff?.id, old_value: oldValue, new_value: newValue, notes
   })
 }
+
+export async function computePlacement(applicantId) {
+  const { error } = await supabase.rpc('compute_placement', { p_applicant_id: applicantId })
+  if (error) throw error
+}
