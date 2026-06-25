@@ -149,44 +149,52 @@ export async function getAssessmentWithQuestions(assessmentId) {
 
 export async function gradeSession(sessionId) {
   const { data: answers, error } = await supabase
-    .from('student_answers').select('*, questions(correct_answer, marks, question_type)').eq('session_id', sessionId)
+    .from('student_answers')
+    .select('*, questions(correct_answer, marks, question_type)')
+    .eq('session_id', sessionId)
   if (error) throw error
 
   let totalMarks = 0, earnedMarks = 0, hasManualGrading = false
 
   for (const answer of answers) {
     const q = answer.questions
+    if (!q) continue
+
     if (q.question_type === 'essay') {
       hasManualGrading = true
       totalMarks += q.marks
       continue
     }
+
     totalMarks += q.marks
+
     if (q.question_type === 'mcq') {
-      const isCorrect = answer.answer_text?.trim().toUpperCase() === q.correct_answer?.trim().toUpperCase()
+      const studentAnswer = (answer.answer_text || '').trim().toUpperCase()
+      const correctAnswer = (q.correct_answer || '').trim().toUpperCase()
+      const isCorrect = studentAnswer === correctAnswer && studentAnswer !== ''
       if (isCorrect) earnedMarks += q.marks
-      await supabase.from('student_answers').update({ is_correct: isCorrect, marks_awarded: isCorrect ? q.marks : 0 }).eq('id', answer.id)
-    } else {
-      // short_answer: flag for manual review (not auto-gradable reliably), but don't block auto MCQ scoring
+      await supabase
+        .from('student_answers')
+        .update({ is_correct: isCorrect, marks_awarded: isCorrect ? q.marks : 0 })
+        .eq('id', answer.id)
+    } else if (q.question_type === 'short_answer') {
       hasManualGrading = true
     }
   }
 
-  const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0
+  const percentage = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100 * 100) / 100 : 0
 
-  await supabase.from('test_sessions').update({
-    raw_score: earnedMarks, percentage: Math.round(percentage * 100) / 100,
-    status: hasManualGrading ? 'submitted' : 'graded'
-  }).eq('id', sessionId)
+  await supabase
+    .from('test_sessions')
+    .update({
+      raw_score: earnedMarks,
+      percentage: percentage,
+      status: hasManualGrading ? 'submitted' : 'graded'
+    })
+    .eq('id', sessionId)
 
   return { earnedMarks, totalMarks, percentage, hasManualGrading }
 }
-
-export async function computePlacement(applicantId) {
-  const { error } = await supabase.rpc('compute_placement', { p_applicant_id: applicantId })
-  if (error) throw error
-}
-
 // ============================================================
 // AUDIT LOG HELPER (unchanged)
 // ============================================================
