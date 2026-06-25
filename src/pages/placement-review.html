@@ -303,7 +303,7 @@ function renderList(list) {
         <div class="ai-meta">
           <span class="badge ${a.placement_status}">${a.placement_status}</span>
           <span>Band ${a.age_band || '—'}</span>
-          ${d ? `<span style="font-family:'DM Mono',monospace;">${grade}</span>` : '<span>No decision yet</span>'}
+          ${a.placement_status !== 'pending' ? `<span style="font-family:'DM Mono',monospace;">${a.placement_status}</span>` : '<span>No decision yet</span>'}
         </div>
       </div>
     `
