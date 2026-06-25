@@ -53,11 +53,22 @@
   .btn-primary { background: var(--ink); color: white; }
   .btn-primary:hover { background: var(--teal); }
   .btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); margin-left: 0.5rem; }
-  .btn-danger { background: var(--rust); color: white; margin-left: 0.5rem; }
+  .btn-danger { background: var(--rust); color: white; margin-left: 0.5rem; padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+  .btn-danger:hover { background: #7a1a0a; }
   .alert { padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
   .alert.success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
   .alert.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
   .action-bar { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+  .upload-area { border: 2px dashed var(--border); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-top: 0.75rem; }
+  .upload-area:hover { border-color: var(--teal); background: #f0f9f9; }
+  .upload-area input { display: none; }
+  .upload-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .upload-text { font-size: 0.85rem; color: var(--muted); }
+  .upload-progress { background: var(--cream); height: 4px; border-radius: 2px; margin-top: 0.75rem; display: none; }
+  .upload-progress-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.3s; width: 0%; }
+  .transcript-file { background: var(--cream); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; }
+  .transcript-file a { color: var(--teal); text-decoration: none; font-weight: 500; }
+  .transcript-file a:hover { color: var(--ink); }
   @media(max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } }
   @media(max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
 </style>
@@ -82,6 +93,7 @@
     <a class="back-link" href="dashboard.html">← Dashboard</a>
     <span style="color:var(--border);">|</span>
     <h1 id="pageTitle">Applicant Detail</h1>
+    <button class="btn btn-danger" id="deleteBtn" style="display:none; margin-left:auto;" onclick="deleteApplicant()">🗑 Delete Student</button>
   </div>
 
   <div class="content">
@@ -99,7 +111,34 @@ let staff = null
 let applicant = null
 let tokens = []
 
-async function init() {
+async function window.deleteApplicant = async function() {
+  if (!confirm(`Are you sure you want to permanently delete ${applicant.full_name}?\n\nThis will remove ALL their data including test results, scores, and placement decisions.\n\nThis action CANNOT be undone.`)) return
+  if (!confirm(`Second confirmation: Delete ${applicant.full_name} permanently?`)) return
+
+  try {
+    const id = applicant.id
+    // Delete in order to respect foreign keys
+    await supabase.from('student_answers').delete().in('session_id',
+      (await supabase.from('test_sessions').select('id').eq('applicant_id', id)).data?.map(s => s.id) || []
+    )
+    await supabase.from('test_sessions').delete().eq('applicant_id', id)
+    await supabase.from('placement_decisions').delete().eq('applicant_id', id)
+    await supabase.from('interview_records').delete().eq('applicant_id', id)
+    await supabase.from('placement_tokens').delete().eq('applicant_id', id)
+    await supabase.from('applicants').delete().eq('id', id)
+    // Also delete transcript from storage if exists
+    if (applicant.transcript_url) {
+      const path = id + '/'
+      await supabase.storage.from('transcripts').remove([path])
+    }
+    alert(`${applicant.full_name} has been deleted.`)
+    window.location.href = 'dashboard.html'
+  } catch(err) {
+    showSuccess('Error deleting: ' + err.message)
+  }
+}
+
+init() {
   await requireAuth()
   staff = await getCurrentStaff()
   const params = new URLSearchParams(window.location.search)
@@ -128,6 +167,10 @@ async function loadApplicant(id) {
   document.getElementById('pageTitle').textContent = data.full_name
   document.getElementById('loadingMsg').style.display = 'none'
   document.getElementById('detailContent').style.display = 'block'
+  // Show delete button for admins only
+  if (staff && staff.role === 'admin') {
+    document.getElementById('deleteBtn').style.display = 'block'
+  }
   renderDetail()
 }
 
@@ -189,6 +232,33 @@ function renderDetail() {
             </div>
             <div class="score-bar-wrap"><div class="score-bar" style="width:${s.percentage||0}%;background:${(s.percentage||0)>=65?'var(--teal)':(s.percentage||0)>=50?'var(--gold)':'var(--rust)'}"></div></div>
           `).join('<br>')}
+      </div>
+
+      <!-- Transcript Upload -->
+      <div class="card full">
+        <div class="card-title">Transcript</div>
+        ${a.transcript_url ? `
+          <div class="transcript-file">
+            <span>📄 ${a.transcript_filename || 'Transcript'}</span>
+            <div style="display:flex; gap:0.75rem; align-items:center;">
+              <span style="font-size:0.78rem; color:var(--muted);">Uploaded ${a.transcript_uploaded_at ? new Date(a.transcript_uploaded_at).toLocaleDateString('en-GB') : ''}</span>
+              <a href="${a.transcript_url}" target="_blank">View →</a>
+              ${staff?.role !== 'academic' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.75rem; font-size:0.78rem;" onclick="deleteTranscript()">Remove</button>` : ''}
+            </div>
+          </div>
+        ` : `
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.75rem;">No transcript uploaded yet. Accepted formats: PDF, JPG, PNG (max 10MB).</p>
+          ${staff?.role !== 'academic' ? `
+            <div class="upload-area" onclick="document.getElementById('transcriptFile').click()">
+              <input type="file" id="transcriptFile" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadTranscript(this)">
+              <div class="upload-icon">📎</div>
+              <div class="upload-text">Click to upload transcript</div>
+            </div>
+            <div class="upload-progress" id="uploadProgress">
+              <div class="upload-progress-fill" id="uploadProgressFill"></div>
+            </div>
+          ` : '<p style="font-size:0.82rem; color:var(--muted);">Contact admissions to upload the transcript.</p>'}
+        `}
       </div>
 
       <!-- Placement Decision -->
@@ -258,6 +328,102 @@ function showError(msg) {
   document.getElementById('loadingMsg').style.display = 'none'
   const el = document.getElementById('alertError')
   el.textContent = msg; el.style.display = 'block'
+}
+
+window.uploadTranscript = async function(input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) {
+    showSuccess('File too large. Maximum size is 10MB.')
+    return
+  }
+
+  const progress = document.getElementById('uploadProgress')
+  const progressFill = document.getElementById('uploadProgressFill')
+  progress.style.display = 'block'
+  progressFill.style.width = '30%'
+
+  try {
+    const ext = file.name.split('.').pop()
+    const path = applicant.id + '/' + Date.now() + '.' + ext
+
+    progressFill.style.width = '60%'
+
+    const { data, error } = await supabase.storage
+      .from('transcripts')
+      .upload(path, file, { upsert: true })
+
+    if (error) throw error
+
+    progressFill.style.width = '80%'
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('transcripts')
+      .getPublicUrl(path)
+
+    // Get signed URL (more secure for private bucket)
+    const { data: signedData } = await supabase.storage
+      .from('transcripts')
+      .createSignedUrl(path, 60 * 60 * 24 * 365) // 1 year
+
+    const url = signedData?.signedUrl || urlData?.publicUrl
+
+    // Update applicant record
+    await supabase.from('applicants').update({
+      transcript_url: url,
+      transcript_filename: file.name,
+      transcript_available: true,
+      transcript_uploaded_at: new Date().toISOString()
+    }).eq('id', applicant.id)
+
+    progressFill.style.width = '100%'
+    showSuccess('Transcript uploaded successfully!')
+    setTimeout(() => loadApplicant(applicant.id), 1000)
+
+  } catch(err) {
+    progress.style.display = 'none'
+    showSuccess('Upload error: ' + err.message)
+  }
+}
+
+window.deleteTranscript = async function() {
+  if (!confirm('Remove this transcript?')) return
+  await supabase.from('applicants').update({
+    transcript_url: null,
+    transcript_filename: null,
+    transcript_available: false,
+    transcript_uploaded_at: null
+  }).eq('id', applicant.id)
+  showSuccess('Transcript removed.')
+  await loadApplicant(applicant.id)
+}
+
+window.deleteApplicant = async function() {
+  if (!confirm(`Are you sure you want to permanently delete ${applicant.full_name}?\n\nThis will remove ALL their data including test results, scores, and placement decisions.\n\nThis action CANNOT be undone.`)) return
+  if (!confirm(`Second confirmation: Delete ${applicant.full_name} permanently?`)) return
+
+  try {
+    const id = applicant.id
+    // Delete in order to respect foreign keys
+    await supabase.from('student_answers').delete().in('session_id',
+      (await supabase.from('test_sessions').select('id').eq('applicant_id', id)).data?.map(s => s.id) || []
+    )
+    await supabase.from('test_sessions').delete().eq('applicant_id', id)
+    await supabase.from('placement_decisions').delete().eq('applicant_id', id)
+    await supabase.from('interview_records').delete().eq('applicant_id', id)
+    await supabase.from('placement_tokens').delete().eq('applicant_id', id)
+    await supabase.from('applicants').delete().eq('id', id)
+    // Also delete transcript from storage if exists
+    if (applicant.transcript_url) {
+      const path = id + '/'
+      await supabase.storage.from('transcripts').remove([path])
+    }
+    alert(`${applicant.full_name} has been deleted.`)
+    window.location.href = 'dashboard.html'
+  } catch(err) {
+    showSuccess('Error deleting: ' + err.message)
+  }
 }
 
 init()
