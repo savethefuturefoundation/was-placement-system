@@ -153,7 +153,6 @@ async function loadApplicants() {
     .from('applicants')
     .select(`
       id, full_name, age_band, placement_status, created_at,
-      placement_decisions(suggested_grade, final_grade, composite_score),
       test_sessions(id, status, assessments(subject))
     `)
     .order('created_at', { ascending: false })
@@ -197,7 +196,7 @@ function renderTable() {
       <td><span style="font-family:'DM Mono',monospace; font-size:0.8rem;">${a.age_band || '—'}</span></td>
       <td style="color:var(--muted); font-size:0.82rem;">${created}</td>
       <td><span class="badge ${a.placement_status}">${a.placement_status}</span></td>
-      <td style="font-family:'DM Mono',monospace; font-size:0.82rem;">${grade}</td>
+     <td style="font-family:'DM Mono',monospace; font-size:0.82rem;">${a.placement_status !== 'pending' ? a.placement_status : '—'}</td>
       <td>
         ${total > 0 ? `
           <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.25rem;">${submitted}/${total} subjects ${submitted===total?'✅':''}</div>
