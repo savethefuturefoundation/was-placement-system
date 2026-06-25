@@ -148,52 +148,11 @@ export async function getAssessmentWithQuestions(assessmentId) {
 // ============================================================
 
 export async function gradeSession(sessionId) {
-  const { data: answers, error } = await supabase
-    .from('student_answers')
-    .select('*, questions(correct_answer, marks, question_type)')
-    .eq('session_id', sessionId)
-  if (error) throw error
-
-  let totalMarks = 0, earnedMarks = 0, hasManualGrading = false
-
-  for (const answer of answers) {
-    const q = answer.questions
-    if (!q) continue
-
-    if (q.question_type === 'essay') {
-      hasManualGrading = true
-      totalMarks += q.marks
-      continue
-    }
-
-    totalMarks += q.marks
-
-    if (q.question_type === 'mcq') {
-      const studentAnswer = (answer.answer_text || '').trim().toUpperCase()
-      const correctAnswer = (q.correct_answer || '').trim().toUpperCase()
-      const isCorrect = studentAnswer === correctAnswer && studentAnswer !== ''
-      if (isCorrect) earnedMarks += q.marks
-      await supabase
-        .from('student_answers')
-        .update({ is_correct: isCorrect, marks_awarded: isCorrect ? q.marks : 0 })
-        .eq('id', answer.id)
-    } else if (q.question_type === 'short_answer') {
-      hasManualGrading = true
-    }
-  }
-
-  const percentage = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100 * 100) / 100 : 0
-
+  // Database trigger handles grading and placement automatically
   await supabase
     .from('test_sessions')
-    .update({
-      raw_score: earnedMarks,
-      percentage: percentage,
-      status: hasManualGrading ? 'submitted' : 'graded'
-    })
+    .update({ status: 'submitted', submitted_at: new Date().toISOString() })
     .eq('id', sessionId)
-
-  return { earnedMarks, totalMarks, percentage, hasManualGrading }
 }
 // ============================================================
 // AUDIT LOG HELPER (unchanged)
