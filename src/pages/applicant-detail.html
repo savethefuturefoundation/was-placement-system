@@ -111,7 +111,98 @@ let staff = null
 let applicant = null
 let tokens = []
 
-async function window.deleteApplicant = async function() {
+async function // ── DOCUMENTS ──
+async function loadDocuments() {
+  const { data: docs } = await supabase
+    .from('applicant_documents')
+    .select('*, staff_profiles(full_name)')
+    .eq('applicant_id', applicant.id)
+    .order('uploaded_at', { ascending: false })
+
+  const container = document.getElementById('documentsList')
+  if (!container) return
+
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No documents uploaded yet.</p>'
+    return
+  }
+
+  container.innerHTML = docs.map(doc => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.85rem; background:var(--cream); margin-bottom:0.5rem;">
+      <div>
+        <div style="font-size:0.88rem; font-weight:500;">📄 ${doc.filename}</div>
+        <div style="font-size:0.75rem; color:var(--muted);">${doc.document_type} · Uploaded by ${doc.staff_profiles?.full_name || 'Staff'} on ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-shrink:0;">
+        <a href="${doc.file_url}" target="_blank" style="color:var(--teal); text-decoration:none; font-size:0.82rem; font-weight:500;">View →</a>
+        ${staff?.role !== 'academic' ? `<button onclick="deleteDocument('${doc.id}', '${doc.file_path}')" style="background:none; border:none; color:var(--rust); cursor:pointer; font-size:0.82rem; padding:0.2rem 0.4rem;">✕</button>` : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+window.uploadDocument = async function(input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) { alert('File too large. Maximum 10MB.'); return }
+
+  const docType = document.getElementById('docType').value
+  const progress = document.getElementById('docUploadProgress')
+  const progressFill = document.getElementById('docUploadProgressFill')
+  progress.style.display = 'block'
+  progressFill.style.width = '30%'
+
+  try {
+    const ext = file.name.split('.').pop()
+    const path = applicant.id + '/docs/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    progressFill.style.width = '60%'
+
+    const { error: uploadError } = await supabase.storage
+      .from('transcripts')
+      .upload(path, file, { upsert: true })
+
+    if (uploadError) throw uploadError
+
+    progressFill.style.width = '80%'
+
+    const { data: signedData } = await supabase.storage
+      .from('transcripts')
+      .createSignedUrl(path, 60 * 60 * 24 * 365)
+
+    const { data: urlData } = supabase.storage.from('transcripts').getPublicUrl(path)
+    const url = signedData?.signedUrl || urlData?.publicUrl
+
+    await supabase.from('applicant_documents').insert({
+      applicant_id: applicant.id,
+      filename: file.name,
+      file_path: path,
+      file_url: url,
+      document_type: docType,
+      uploaded_by: staff.id
+    })
+
+    progressFill.style.width = '100%'
+    input.value = ''
+    setTimeout(() => { progress.style.display = 'none'; progressFill.style.width = '0%' }, 1000)
+    showSuccess('Document uploaded successfully!')
+    loadDocuments()
+
+  } catch(err) {
+    progress.style.display = 'none'
+    alert('Upload error: ' + err.message)
+  }
+}
+
+window.deleteDocument = async function(docId, filePath) {
+  if (!confirm('Remove this document?')) return
+  await supabase.from('applicant_documents').delete().eq('id', docId)
+  await supabase.storage.from('transcripts').remove([filePath])
+  showSuccess('Document removed.')
+  loadDocuments()
+}
+
+window.deleteApplicant = async function() {
   if (!confirm(`Are you sure you want to permanently delete ${applicant.full_name}?\n\nThis will remove ALL their data including test results, scores, and placement decisions.\n\nThis action CANNOT be undone.`)) return
   if (!confirm(`Second confirmation: Delete ${applicant.full_name} permanently?`)) return
 
@@ -261,6 +352,38 @@ function renderDetail() {
         `}
       </div>
 
+      <!-- Documents -->
+      <div class="card full">
+        <div class="card-title">Documents</div>
+        <div id="documentsList">
+          <p style="font-size:0.85rem; color:var(--muted); font-style:italic;">Loading documents…</p>
+        </div>
+        ${staff?.role !== 'academic' ? `
+          <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--cream);">
+            <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+              <div style="flex:1; min-width:150px;">
+                <label style="display:block; font-size:0.72rem; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.35rem;">Document Type</label>
+                <select id="docType" style="width:100%; border:1.5px solid var(--border); padding:0.6rem 0.85rem; font-family:'DM Sans',sans-serif; font-size:0.88rem; background:var(--paper); outline:none;">
+                  <option value="Report Card">Report Card</option>
+                  <option value="Birth Certificate">Birth Certificate</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Medical Record">Medical Record</option>
+                  <option value="Reference Letter">Reference Letter</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="uploadDocument(this)">
+                <button class="btn btn-primary" style="padding:0.6rem 1.25rem;" onclick="document.getElementById('docFile').click()">+ Upload Document</button>
+              </div>
+            </div>
+            <div class="upload-progress" id="docUploadProgress" style="margin-top:0.75rem;">
+              <div class="upload-progress-fill" id="docUploadProgressFill"></div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
       <!-- Placement Decision -->
       <div class="card full">
         <div class="card-title">Placement Decision</div>
@@ -397,6 +520,97 @@ window.deleteTranscript = async function() {
   }).eq('id', applicant.id)
   showSuccess('Transcript removed.')
   await loadApplicant(applicant.id)
+}
+
+// ── DOCUMENTS ──
+async function loadDocuments() {
+  const { data: docs } = await supabase
+    .from('applicant_documents')
+    .select('*, staff_profiles(full_name)')
+    .eq('applicant_id', applicant.id)
+    .order('uploaded_at', { ascending: false })
+
+  const container = document.getElementById('documentsList')
+  if (!container) return
+
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No documents uploaded yet.</p>'
+    return
+  }
+
+  container.innerHTML = docs.map(doc => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.85rem; background:var(--cream); margin-bottom:0.5rem;">
+      <div>
+        <div style="font-size:0.88rem; font-weight:500;">📄 ${doc.filename}</div>
+        <div style="font-size:0.75rem; color:var(--muted);">${doc.document_type} · Uploaded by ${doc.staff_profiles?.full_name || 'Staff'} on ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-shrink:0;">
+        <a href="${doc.file_url}" target="_blank" style="color:var(--teal); text-decoration:none; font-size:0.82rem; font-weight:500;">View →</a>
+        ${staff?.role !== 'academic' ? `<button onclick="deleteDocument('${doc.id}', '${doc.file_path}')" style="background:none; border:none; color:var(--rust); cursor:pointer; font-size:0.82rem; padding:0.2rem 0.4rem;">✕</button>` : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+window.uploadDocument = async function(input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) { alert('File too large. Maximum 10MB.'); return }
+
+  const docType = document.getElementById('docType').value
+  const progress = document.getElementById('docUploadProgress')
+  const progressFill = document.getElementById('docUploadProgressFill')
+  progress.style.display = 'block'
+  progressFill.style.width = '30%'
+
+  try {
+    const ext = file.name.split('.').pop()
+    const path = applicant.id + '/docs/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    progressFill.style.width = '60%'
+
+    const { error: uploadError } = await supabase.storage
+      .from('transcripts')
+      .upload(path, file, { upsert: true })
+
+    if (uploadError) throw uploadError
+
+    progressFill.style.width = '80%'
+
+    const { data: signedData } = await supabase.storage
+      .from('transcripts')
+      .createSignedUrl(path, 60 * 60 * 24 * 365)
+
+    const { data: urlData } = supabase.storage.from('transcripts').getPublicUrl(path)
+    const url = signedData?.signedUrl || urlData?.publicUrl
+
+    await supabase.from('applicant_documents').insert({
+      applicant_id: applicant.id,
+      filename: file.name,
+      file_path: path,
+      file_url: url,
+      document_type: docType,
+      uploaded_by: staff.id
+    })
+
+    progressFill.style.width = '100%'
+    input.value = ''
+    setTimeout(() => { progress.style.display = 'none'; progressFill.style.width = '0%' }, 1000)
+    showSuccess('Document uploaded successfully!')
+    loadDocuments()
+
+  } catch(err) {
+    progress.style.display = 'none'
+    alert('Upload error: ' + err.message)
+  }
+}
+
+window.deleteDocument = async function(docId, filePath) {
+  if (!confirm('Remove this document?')) return
+  await supabase.from('applicant_documents').delete().eq('id', docId)
+  await supabase.storage.from('transcripts').remove([filePath])
+  showSuccess('Document removed.')
+  loadDocuments()
 }
 
 window.deleteApplicant = async function() {
