@@ -19,9 +19,14 @@
   .sidebar-brand-tag { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.25rem; }
   .sidebar-brand-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: white; line-height: 1.3; }
   .sidebar-nav { flex: 1; padding: 1rem 0; }
-  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; text-decoration: none; border-left: 3px solid transparent; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem; text-decoration: none; border-left: 3px solid transparent; transition: all 0.15s; }
   .nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
   .nav-item.active { color: white; border-left-color: var(--gold); background: rgba(200,148,58,0.08); }
+  .sidebar-user { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.6rem; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; flex-shrink: 0; }
+  .user-name { font-size: 0.8rem; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .sign-out-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; }
+  .sign-out-btn:hover { color: var(--rust); }
   .main { margin-left: var(--sidebar); min-height: 100vh; }
   .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
   .back-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
@@ -49,26 +54,23 @@
   .tag-english { background: #fef3e8; color: #92400e; }
   .tag-general_paper { background: #ecfdf5; color: #065f46; }
   .token-box { background: var(--cream); border: 1px solid var(--border); padding: 0.75rem 1rem; font-family: 'DM Mono', monospace; font-size: 0.78rem; word-break: break-all; margin-top: 0.75rem; }
-  .btn { padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; transition: all 0.15s; }
+  .btn { padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; transition: all 0.15s; display: inline-block; text-decoration: none; }
   .btn-primary { background: var(--ink); color: white; }
   .btn-primary:hover { background: var(--teal); }
-  .btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); margin-left: 0.5rem; }
-  .btn-danger { background: var(--rust); color: white; margin-left: 0.5rem; padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+  .btn-secondary { background: var(--cream); color: var(--ink); border: 1px solid var(--border); }
+  .btn-danger { background: var(--rust); color: white; }
   .btn-danger:hover { background: #7a1a0a; }
   .alert { padding: 0.75rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
   .alert.success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
   .alert.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
-  .action-bar { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
-  .upload-area { border: 2px dashed var(--border); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-top: 0.75rem; }
-  .upload-area:hover { border-color: var(--teal); background: #f0f9f9; }
-  .upload-area input { display: none; }
-  .upload-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
-  .upload-text { font-size: 0.85rem; color: var(--muted); }
-  .upload-progress { background: var(--cream); height: 4px; border-radius: 2px; margin-top: 0.75rem; display: none; }
-  .upload-progress-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.3s; width: 0%; }
-  .transcript-file { background: var(--cream); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; font-size: 0.85rem; }
-  .transcript-file a { color: var(--teal); text-decoration: none; font-weight: 500; }
-  .transcript-file a:hover { color: var(--ink); }
+  .action-bar { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; align-items: center; }
+  .doc-item { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.85rem; background: var(--cream); margin-bottom: 0.5rem; }
+  .doc-name { font-size: 0.88rem; font-weight: 500; }
+  .doc-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+  .upload-bar { height: 4px; background: var(--cream); border-radius: 2px; margin-top: 0.5rem; display: none; }
+  .upload-bar-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.3s; width: 0%; }
+  select { border: 1.5px solid var(--border); padding: 0.6rem 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; background: var(--paper); outline: none; cursor: pointer; }
+  select:focus { border-color: var(--teal); }
   @media(max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } }
   @media(max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
 </style>
@@ -85,7 +87,13 @@
     <a class="nav-item" href="applicant-new.html"><span>➕</span> New Applicant</a>
     <a class="nav-item" href="assessment-builder.html"><span>📝</span> Assessments</a>
     <a class="nav-item" href="placement-review.html"><span>⚖️</span> Placements</a>
+    <a class="nav-item" href="change-password.html"><span>🔑</span> Change Password</a>
   </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">—</div>
+    <div class="user-name" id="userName">…</div>
+    <button class="sign-out-btn" onclick="handleSignOut()">↩</button>
+  </div>
 </aside>
 
 <main class="main">
@@ -105,133 +113,23 @@
 </main>
 
 <script type="module">
-import { supabase, requireAuth, getCurrentStaff, generatePlacementToken } from '../lib/supabase.js'
+import { supabase, requireAuth, getCurrentStaff, generatePlacementToken, signOut } from '../lib/supabase.js'
 
 let staff = null
 let applicant = null
 let tokens = []
+let documents = []
 
-async function // ── DOCUMENTS ──
-async function loadDocuments() {
-  const { data: docs } = await supabase
-    .from('applicant_documents')
-    .select('*, staff_profiles(full_name)')
-    .eq('applicant_id', applicant.id)
-    .order('uploaded_at', { ascending: false })
+window.handleSignOut = signOut
 
-  const container = document.getElementById('documentsList')
-  if (!container) return
-
-  if (!docs || docs.length === 0) {
-    container.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No documents uploaded yet.</p>'
-    return
-  }
-
-  container.innerHTML = docs.map(doc => `
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.85rem; background:var(--cream); margin-bottom:0.5rem;">
-      <div>
-        <div style="font-size:0.88rem; font-weight:500;">📄 ${doc.filename}</div>
-        <div style="font-size:0.75rem; color:var(--muted);">${doc.document_type} · Uploaded by ${doc.staff_profiles?.full_name || 'Staff'} on ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
-      </div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-shrink:0;">
-        <a href="${doc.file_url}" target="_blank" style="color:var(--teal); text-decoration:none; font-size:0.82rem; font-weight:500;">View →</a>
-        ${staff?.role !== 'academic' ? `<button onclick="deleteDocument('${doc.id}', '${doc.file_path}')" style="background:none; border:none; color:var(--rust); cursor:pointer; font-size:0.82rem; padding:0.2rem 0.4rem;">✕</button>` : ''}
-      </div>
-    </div>
-  `).join('')
-}
-
-window.uploadDocument = async function(input) {
-  const file = input.files[0]
-  if (!file) return
-  if (file.size > 10 * 1024 * 1024) { alert('File too large. Maximum 10MB.'); return }
-
-  const docType = document.getElementById('docType').value
-  const progress = document.getElementById('docUploadProgress')
-  const progressFill = document.getElementById('docUploadProgressFill')
-  progress.style.display = 'block'
-  progressFill.style.width = '30%'
-
-  try {
-    const ext = file.name.split('.').pop()
-    const path = applicant.id + '/docs/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-
-    progressFill.style.width = '60%'
-
-    const { error: uploadError } = await supabase.storage
-      .from('transcripts')
-      .upload(path, file, { upsert: true })
-
-    if (uploadError) throw uploadError
-
-    progressFill.style.width = '80%'
-
-    const { data: signedData } = await supabase.storage
-      .from('transcripts')
-      .createSignedUrl(path, 60 * 60 * 24 * 365)
-
-    const { data: urlData } = supabase.storage.from('transcripts').getPublicUrl(path)
-    const url = signedData?.signedUrl || urlData?.publicUrl
-
-    await supabase.from('applicant_documents').insert({
-      applicant_id: applicant.id,
-      filename: file.name,
-      file_path: path,
-      file_url: url,
-      document_type: docType,
-      uploaded_by: staff.id
-    })
-
-    progressFill.style.width = '100%'
-    input.value = ''
-    setTimeout(() => { progress.style.display = 'none'; progressFill.style.width = '0%' }, 1000)
-    showSuccess('Document uploaded successfully!')
-    loadDocuments()
-
-  } catch(err) {
-    progress.style.display = 'none'
-    alert('Upload error: ' + err.message)
-  }
-}
-
-window.deleteDocument = async function(docId, filePath) {
-  if (!confirm('Remove this document?')) return
-  await supabase.from('applicant_documents').delete().eq('id', docId)
-  await supabase.storage.from('transcripts').remove([filePath])
-  showSuccess('Document removed.')
-  loadDocuments()
-}
-
-window.deleteApplicant = async function() {
-  if (!confirm(`Are you sure you want to permanently delete ${applicant.full_name}?\n\nThis will remove ALL their data including test results, scores, and placement decisions.\n\nThis action CANNOT be undone.`)) return
-  if (!confirm(`Second confirmation: Delete ${applicant.full_name} permanently?`)) return
-
-  try {
-    const id = applicant.id
-    // Delete in order to respect foreign keys
-    await supabase.from('student_answers').delete().in('session_id',
-      (await supabase.from('test_sessions').select('id').eq('applicant_id', id)).data?.map(s => s.id) || []
-    )
-    await supabase.from('test_sessions').delete().eq('applicant_id', id)
-    await supabase.from('placement_decisions').delete().eq('applicant_id', id)
-    await supabase.from('interview_records').delete().eq('applicant_id', id)
-    await supabase.from('placement_tokens').delete().eq('applicant_id', id)
-    await supabase.from('applicants').delete().eq('id', id)
-    // Also delete transcript from storage if exists
-    if (applicant.transcript_url) {
-      const path = id + '/'
-      await supabase.storage.from('transcripts').remove([path])
-    }
-    alert(`${applicant.full_name} has been deleted.`)
-    window.location.href = 'dashboard.html'
-  } catch(err) {
-    showSuccess('Error deleting: ' + err.message)
-  }
-}
-
-init() {
+async function init() {
   await requireAuth()
   staff = await getCurrentStaff()
+  if (!staff) return
+
+  document.getElementById('userAvatar').textContent = staff.full_name.charAt(0).toUpperCase()
+  document.getElementById('userName').textContent = staff.full_name
+
   const params = new URLSearchParams(window.location.search)
   const id = params.get('id')
   if (!id) { showError('No applicant ID provided.'); return }
@@ -239,11 +137,13 @@ init() {
 }
 
 async function loadApplicant(id) {
+  document.getElementById('loadingMsg').style.display = 'block'
+  document.getElementById('detailContent').style.display = 'none'
+
   const { data, error } = await supabase
     .from('applicants')
     .select(`
       *,
-      placement_decisions(*),
       test_sessions(*, assessments(title, subject, grade_band)),
       interview_records(*),
       placement_tokens(*)
@@ -251,18 +151,29 @@ async function loadApplicant(id) {
     .eq('id', id)
     .single()
 
-  if (error || !data) { showError('Applicant not found.'); return }
+  if (error || !data) { showError('Applicant not found. ' + (error?.message || '')); return }
+
+  // Fetch placement decisions separately
+  const { data: decisions } = await supabase
+    .from('placement_decisions')
+    .select('*')
+    .eq('applicant_id', id)
 
   applicant = data
+  applicant.placement_decisions = decisions || []
   tokens = data.placement_tokens || []
+
   document.getElementById('pageTitle').textContent = data.full_name
   document.getElementById('loadingMsg').style.display = 'none'
   document.getElementById('detailContent').style.display = 'block'
+
   // Show delete button for admins only
   if (staff && staff.role === 'admin') {
-    document.getElementById('deleteBtn').style.display = 'block'
+    document.getElementById('deleteBtn').style.display = 'inline-block'
   }
+
   renderDetail()
+  loadDocuments(id)
 }
 
 function renderDetail() {
@@ -270,6 +181,7 @@ function renderDetail() {
   const d = a.placement_decisions?.[0]
   const sessions = a.test_sessions || []
   const activeToken = tokens.find(t => !t.is_used && new Date(t.expires_at) > new Date())
+  const isAdminOrAdmissions = staff && (staff.role === 'admin' || staff.role === 'admissions')
 
   document.getElementById('detailContent').innerHTML = `
     <div class="cards-grid">
@@ -278,12 +190,13 @@ function renderDetail() {
       <div class="card">
         <div class="card-title">Student Information</div>
         <div class="info-row"><span class="info-label">Full Name</span><span>${a.full_name}</span></div>
-        <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value">${a.date_of_birth}</span></div>
+        <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value">${a.date_of_birth || '—'}</span></div>
         <div class="info-row"><span class="info-label">Age Band</span><span class="info-value">${a.age_band || '—'}</span></div>
         <div class="info-row"><span class="info-label">Nationality</span><span>${a.nationality || '—'}</span></div>
         <div class="info-row"><span class="info-label">Previous School</span><span>${a.previous_school || '—'}</span></div>
         <div class="info-row"><span class="info-label">Previous Grade</span><span>${a.previous_grade || '—'}</span></div>
         <div class="info-row"><span class="info-label">Status</span><span><span class="badge ${a.placement_status}">${a.placement_status}</span></span></div>
+        ${a.notes ? `<div class="info-row"><span class="info-label">Notes</span><span style="font-size:0.82rem;">${a.notes}</span></div>` : ''}
       </div>
 
       <!-- Parent Info -->
@@ -293,22 +206,21 @@ function renderDetail() {
         <div class="info-row"><span class="info-label">Email</span><span style="font-size:0.82rem;">${a.parent_email}</span></div>
         <div class="info-row"><span class="info-label">Phone</span><span>${a.parent_phone || '—'}</span></div>
         <div class="info-row"><span class="info-label">Transcript</span><span>${a.transcript_available ? '✅ Received' : '⏳ Pending'}</span></div>
-        ${a.notes ? `<div class="info-row"><span class="info-label">Notes</span><span style="font-size:0.82rem;">${a.notes}</span></div>` : ''}
       </div>
 
       <!-- Test Link -->
       <div class="card">
         <div class="card-title">Test Access Link</div>
         ${activeToken ? `
-          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.5rem;">Active link — expires ${new Date(activeToken.expires_at).toLocaleString()}</p>
-          <div class="token-box" id="tokenBox">${window.location.origin}/pages/test.html?token=${activeToken.token}</div>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.5rem;">Active link — expires ${new Date(activeToken.expires_at).toLocaleString('en-GB')}</p>
+          <div class="token-box">${window.location.origin}/pages/test.html?token=${activeToken.token}</div>
           <div class="action-bar">
             <button class="btn btn-primary" onclick="copyToken('${activeToken.token}')">Copy Link</button>
-            ${staff?.role !== 'academic' ? `<button class="btn btn-secondary" onclick="revokeToken('${activeToken.id}')">Revoke</button>` : ''}
+            ${isAdminOrAdmissions ? `<button class="btn btn-secondary" onclick="revokeToken('${activeToken.id}')">Revoke</button>` : ''}
           </div>
         ` : `
-          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.75rem;">No active test link. Generate a new one to send to the parent.</p>
-          ${staff?.role !== 'academic' ? `<button class="btn btn-primary" onclick="generateToken()">Generate New Link</button>` : '<p style="font-size:0.82rem; color:var(--muted);">Contact admissions to generate a test link.</p>'}
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.75rem;">No active test link. ${tokens.length > 0 ? 'Previous link has expired or been used.' : 'Generate a link to send to the parent.'}</p>
+          ${isAdminOrAdmissions ? `<button class="btn btn-primary" onclick="generateToken()">Generate New Link</button>` : '<p style="font-size:0.82rem; color:var(--muted);">Contact admissions to generate a test link.</p>'}
         `}
       </div>
 
@@ -317,69 +229,36 @@ function renderDetail() {
         <div class="card-title">Test Sessions</div>
         ${sessions.length === 0 ? '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No test sessions yet.</p>' :
           sessions.map(s => `
-            <div class="info-row">
-              <span><span class="subject-tag tag-${s.assessments?.subject}">${(s.assessments?.subject||'').replace('_',' ').toUpperCase()}</span></span>
-              <span class="info-value">${s.status} ${s.percentage != null ? '— ' + s.percentage.toFixed(1) + '%' : ''}</span>
+            <div style="margin-bottom:0.75rem;">
+              <div class="info-row">
+                <span><span class="subject-tag tag-${s.assessments?.subject || ''}">${(s.assessments?.subject || '').replace('_',' ').toUpperCase()}</span></span>
+                <span class="info-value">${s.status} ${s.percentage != null ? '— ' + s.percentage.toFixed(1) + '%' : ''}</span>
+              </div>
+              <div class="score-bar-wrap"><div class="score-bar" style="width:${s.percentage||0}%;background:${(s.percentage||0)>=65?'var(--teal)':(s.percentage||0)>=50?'var(--gold)':'var(--rust)'}"></div></div>
             </div>
-            <div class="score-bar-wrap"><div class="score-bar" style="width:${s.percentage||0}%;background:${(s.percentage||0)>=65?'var(--teal)':(s.percentage||0)>=50?'var(--gold)':'var(--rust)'}"></div></div>
-          `).join('<br>')}
-      </div>
-
-      <!-- Transcript Upload -->
-      <div class="card full">
-        <div class="card-title">Transcript</div>
-        ${a.transcript_url ? `
-          <div class="transcript-file">
-            <span>📄 ${a.transcript_filename || 'Transcript'}</span>
-            <div style="display:flex; gap:0.75rem; align-items:center;">
-              <span style="font-size:0.78rem; color:var(--muted);">Uploaded ${a.transcript_uploaded_at ? new Date(a.transcript_uploaded_at).toLocaleDateString('en-GB') : ''}</span>
-              <a href="${a.transcript_url}" target="_blank">View →</a>
-              ${staff?.role !== 'academic' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.75rem; font-size:0.78rem;" onclick="deleteTranscript()">Remove</button>` : ''}
-            </div>
-          </div>
-        ` : `
-          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.75rem;">No transcript uploaded yet. Accepted formats: PDF, JPG, PNG (max 10MB).</p>
-          ${staff?.role !== 'academic' ? `
-            <div class="upload-area" onclick="document.getElementById('transcriptFile').click()">
-              <input type="file" id="transcriptFile" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadTranscript(this)">
-              <div class="upload-icon">📎</div>
-              <div class="upload-text">Click to upload transcript</div>
-            </div>
-            <div class="upload-progress" id="uploadProgress">
-              <div class="upload-progress-fill" id="uploadProgressFill"></div>
-            </div>
-          ` : '<p style="font-size:0.82rem; color:var(--muted);">Contact admissions to upload the transcript.</p>'}
-        `}
+          `).join('')}
       </div>
 
       <!-- Documents -->
       <div class="card full">
         <div class="card-title">Documents</div>
-        <div id="documentsList">
-          <p style="font-size:0.85rem; color:var(--muted); font-style:italic;">Loading documents…</p>
-        </div>
-        ${staff?.role !== 'academic' ? `
+        <div id="documentsList"><p style="font-size:0.85rem; color:var(--muted); font-style:italic;">Loading…</p></div>
+        ${isAdminOrAdmissions ? `
           <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--cream);">
-            <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
-              <div style="flex:1; min-width:150px;">
-                <label style="display:block; font-size:0.72rem; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.35rem;">Document Type</label>
-                <select id="docType" style="width:100%; border:1.5px solid var(--border); padding:0.6rem 0.85rem; font-family:'DM Sans',sans-serif; font-size:0.88rem; background:var(--paper); outline:none;">
-                  <option value="Report Card">Report Card</option>
-                  <option value="Birth Certificate">Birth Certificate</option>
-                  <option value="Passport">Passport</option>
-                  <option value="Medical Record">Medical Record</option>
-                  <option value="Reference Letter">Reference Letter</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="uploadDocument(this)">
-                <button class="btn btn-primary" style="padding:0.6rem 1.25rem;" onclick="document.getElementById('docFile').click()">+ Upload Document</button>
-              </div>
+            <div class="action-bar">
+              <select id="docType">
+                <option value="Report Card">Report Card</option>
+                <option value="Birth Certificate">Birth Certificate</option>
+                <option value="Passport">Passport</option>
+                <option value="Medical Record">Medical Record</option>
+                <option value="Reference Letter">Reference Letter</option>
+                <option value="Transcript">Transcript</option>
+                <option value="Other">Other</option>
+              </select>
+              <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="uploadDocument(this)">
+              <button class="btn btn-primary" onclick="document.getElementById('docFile').click()">+ Upload Document</button>
             </div>
-            <div class="upload-progress" id="docUploadProgress" style="margin-top:0.75rem;">
-              <div class="upload-progress-fill" id="docUploadProgressFill"></div>
-            </div>
+            <div class="upload-bar" id="docUploadBar"><div class="upload-bar-fill" id="docUploadBarFill"></div></div>
           </div>
         ` : ''}
       </div>
@@ -396,9 +275,10 @@ function renderDetail() {
               ${d.flagged_reason ? `<div class="info-row"><span class="info-label">Flag</span><span style="font-size:0.8rem; color:var(--rust);">${d.flagged_reason}</span></div>` : ''}
             </div>
             <div>
-              <div class="info-row"><span class="info-label">Math Score</span><span class="info-value">${d.math_score?.toFixed(1)||'—'}%</span></div>
-              <div class="info-row"><span class="info-label">English Score</span><span class="info-value">${d.english_score?.toFixed(1)||'—'}%</span></div>
-              <div class="info-row"><span class="info-label">Composite Score</span><span class="info-value">${d.composite_score?.toFixed(1)||'—'}%</span></div>
+              <div class="info-row"><span class="info-label">Math</span><span class="info-value">${d.math_score?.toFixed(1)||'—'}%</span></div>
+              <div class="info-row"><span class="info-label">English</span><span class="info-value">${d.english_score?.toFixed(1)||'—'}%</span></div>
+              <div class="info-row"><span class="info-label">General Paper</span><span class="info-value">${d.general_paper_score?.toFixed(1)||'—'}%</span></div>
+              <div class="info-row"><span class="info-label">Composite</span><span class="info-value">${d.composite_score?.toFixed(1)||'—'}%</span></div>
               <div class="score-bar-wrap"><div class="score-bar" style="width:${d.composite_score||0}%"></div></div>
             </div>
           </div>
@@ -406,7 +286,7 @@ function renderDetail() {
             <a href="placement-review.html" class="btn btn-primary">Open in Placement Review →</a>
           </div>
         ` : `
-          <p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No placement decision yet. The student must complete the test first, then run the decision engine in Placement Review.</p>
+          <p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No placement decision yet. The student must complete the test first.</p>
           <div class="action-bar">
             <a href="placement-review.html" class="btn btn-primary">Go to Placement Review →</a>
           </div>
@@ -417,11 +297,47 @@ function renderDetail() {
   `
 }
 
+async function loadDocuments(id) {
+  const applicantId = id || applicant?.id
+  if (!applicantId) return
+
+  const { data: docs } = await supabase
+    .from('applicant_documents')
+    .select('*, staff_profiles(full_name)')
+    .eq('applicant_id', applicantId)
+    .order('uploaded_at', { ascending: false })
+
+  documents = docs || []
+  const container = document.getElementById('documentsList')
+  if (!container) return
+
+  const isAdminOrAdmissions = staff && (staff.role === 'admin' || staff.role === 'admissions')
+
+  if (documents.length === 0) {
+    container.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No documents uploaded yet.</p>'
+    return
+  }
+
+  container.innerHTML = documents.map(doc => `
+    <div class="doc-item">
+      <div>
+        <div class="doc-name">📄 ${doc.filename}</div>
+        <div class="doc-meta">${doc.document_type} · ${doc.staff_profiles?.full_name || 'Staff'} · ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
+      </div>
+      <div class="action-bar" style="margin-top:0;">
+        <a href="${doc.file_url}" target="_blank" class="btn btn-secondary" style="padding:0.3rem 0.75rem; font-size:0.78rem;">View →</a>
+        ${isAdminOrAdmissions ? `<button onclick="deleteDocument('${doc.id}','${doc.file_path}')" class="btn btn-danger" style="padding:0.3rem 0.75rem; font-size:0.78rem;">Remove</button>` : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+// ── TOKEN ACTIONS ──
 window.copyToken = function(token) {
   const link = window.location.origin + '/pages/test.html?token=' + token
   navigator.clipboard.writeText(link)
     .then(() => showSuccess('Link copied to clipboard!'))
-    .catch(() => alert('Please copy manually: ' + link))
+    .catch(() => alert('Copy manually: ' + link))
 }
 
 window.generateToken = async function() {
@@ -429,160 +345,41 @@ window.generateToken = async function() {
     const token = await generatePlacementToken(applicant.id, applicant.parent_email, staff.id)
     showSuccess('New test link generated!')
     await loadApplicant(applicant.id)
-  } catch(err) {
-    showError('Error: ' + err.message)
-  }
+  } catch(err) { showError('Error: ' + err.message) }
 }
 
 window.revokeToken = async function(tokenId) {
-  if (!confirm('Revoke this test link? The student will no longer be able to use it.')) return
+  if (!confirm('Revoke this test link?')) return
   await supabase.from('placement_tokens').update({ is_used: true }).eq('id', tokenId)
   showSuccess('Token revoked.')
   await loadApplicant(applicant.id)
 }
 
-function showSuccess(msg) {
-  const el = document.getElementById('alertSuccess')
-  el.textContent = msg; el.style.display = 'block'
-  setTimeout(() => el.style.display = 'none', 4000)
-}
-
-function showError(msg) {
-  document.getElementById('loadingMsg').style.display = 'none'
-  const el = document.getElementById('alertError')
-  el.textContent = msg; el.style.display = 'block'
-}
-
-window.uploadTranscript = async function(input) {
-  const file = input.files[0]
-  if (!file) return
-  if (file.size > 10 * 1024 * 1024) {
-    showSuccess('File too large. Maximum size is 10MB.')
-    return
-  }
-
-  const progress = document.getElementById('uploadProgress')
-  const progressFill = document.getElementById('uploadProgressFill')
-  progress.style.display = 'block'
-  progressFill.style.width = '30%'
-
-  try {
-    const ext = file.name.split('.').pop()
-    const path = applicant.id + '/' + Date.now() + '.' + ext
-
-    progressFill.style.width = '60%'
-
-    const { data, error } = await supabase.storage
-      .from('transcripts')
-      .upload(path, file, { upsert: true })
-
-    if (error) throw error
-
-    progressFill.style.width = '80%'
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('transcripts')
-      .getPublicUrl(path)
-
-    // Get signed URL (more secure for private bucket)
-    const { data: signedData } = await supabase.storage
-      .from('transcripts')
-      .createSignedUrl(path, 60 * 60 * 24 * 365) // 1 year
-
-    const url = signedData?.signedUrl || urlData?.publicUrl
-
-    // Update applicant record
-    await supabase.from('applicants').update({
-      transcript_url: url,
-      transcript_filename: file.name,
-      transcript_available: true,
-      transcript_uploaded_at: new Date().toISOString()
-    }).eq('id', applicant.id)
-
-    progressFill.style.width = '100%'
-    showSuccess('Transcript uploaded successfully!')
-    setTimeout(() => loadApplicant(applicant.id), 1000)
-
-  } catch(err) {
-    progress.style.display = 'none'
-    showSuccess('Upload error: ' + err.message)
-  }
-}
-
-window.deleteTranscript = async function() {
-  if (!confirm('Remove this transcript?')) return
-  await supabase.from('applicants').update({
-    transcript_url: null,
-    transcript_filename: null,
-    transcript_available: false,
-    transcript_uploaded_at: null
-  }).eq('id', applicant.id)
-  showSuccess('Transcript removed.')
-  await loadApplicant(applicant.id)
-}
-
-// ── DOCUMENTS ──
-async function loadDocuments() {
-  const { data: docs } = await supabase
-    .from('applicant_documents')
-    .select('*, staff_profiles(full_name)')
-    .eq('applicant_id', applicant.id)
-    .order('uploaded_at', { ascending: false })
-
-  const container = document.getElementById('documentsList')
-  if (!container) return
-
-  if (!docs || docs.length === 0) {
-    container.innerHTML = '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No documents uploaded yet.</p>'
-    return
-  }
-
-  container.innerHTML = docs.map(doc => `
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.85rem; background:var(--cream); margin-bottom:0.5rem;">
-      <div>
-        <div style="font-size:0.88rem; font-weight:500;">📄 ${doc.filename}</div>
-        <div style="font-size:0.75rem; color:var(--muted);">${doc.document_type} · Uploaded by ${doc.staff_profiles?.full_name || 'Staff'} on ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
-      </div>
-      <div style="display:flex; gap:0.5rem; align-items:center; flex-shrink:0;">
-        <a href="${doc.file_url}" target="_blank" style="color:var(--teal); text-decoration:none; font-size:0.82rem; font-weight:500;">View →</a>
-        ${staff?.role !== 'academic' ? `<button onclick="deleteDocument('${doc.id}', '${doc.file_path}')" style="background:none; border:none; color:var(--rust); cursor:pointer; font-size:0.82rem; padding:0.2rem 0.4rem;">✕</button>` : ''}
-      </div>
-    </div>
-  `).join('')
-}
-
+// ── DOCUMENT ACTIONS ──
 window.uploadDocument = async function(input) {
   const file = input.files[0]
   if (!file) return
   if (file.size > 10 * 1024 * 1024) { alert('File too large. Maximum 10MB.'); return }
 
   const docType = document.getElementById('docType').value
-  const progress = document.getElementById('docUploadProgress')
-  const progressFill = document.getElementById('docUploadProgressFill')
-  progress.style.display = 'block'
-  progressFill.style.width = '30%'
+  const bar = document.getElementById('docUploadBar')
+  const fill = document.getElementById('docUploadBarFill')
+  bar.style.display = 'block'
+  fill.style.width = '30%'
 
   try {
-    const ext = file.name.split('.').pop()
-    const path = applicant.id + '/docs/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = applicant.id + '/docs/' + Date.now() + '_' + safeName
+    fill.style.width = '60%'
 
-    progressFill.style.width = '60%'
+    const { error: upErr } = await supabase.storage.from('transcripts').upload(path, file, { upsert: true })
+    if (upErr) throw upErr
 
-    const { error: uploadError } = await supabase.storage
-      .from('transcripts')
-      .upload(path, file, { upsert: true })
+    fill.style.width = '80%'
 
-    if (uploadError) throw uploadError
-
-    progressFill.style.width = '80%'
-
-    const { data: signedData } = await supabase.storage
-      .from('transcripts')
-      .createSignedUrl(path, 60 * 60 * 24 * 365)
-
-    const { data: urlData } = supabase.storage.from('transcripts').getPublicUrl(path)
-    const url = signedData?.signedUrl || urlData?.publicUrl
+    const { data: signedData } = await supabase.storage.from('transcripts').createSignedUrl(path, 60*60*24*365)
+    const { data: pubData } = supabase.storage.from('transcripts').getPublicUrl(path)
+    const url = signedData?.signedUrl || pubData?.publicUrl
 
     await supabase.from('applicant_documents').insert({
       applicant_id: applicant.id,
@@ -593,14 +390,13 @@ window.uploadDocument = async function(input) {
       uploaded_by: staff.id
     })
 
-    progressFill.style.width = '100%'
+    fill.style.width = '100%'
     input.value = ''
-    setTimeout(() => { progress.style.display = 'none'; progressFill.style.width = '0%' }, 1000)
-    showSuccess('Document uploaded successfully!')
+    setTimeout(() => { bar.style.display = 'none'; fill.style.width = '0%' }, 800)
+    showSuccess('Document uploaded!')
     loadDocuments()
-
   } catch(err) {
-    progress.style.display = 'none'
+    bar.style.display = 'none'
     alert('Upload error: ' + err.message)
   }
 }
@@ -613,31 +409,41 @@ window.deleteDocument = async function(docId, filePath) {
   loadDocuments()
 }
 
+// ── DELETE STUDENT (Admin only) ──
 window.deleteApplicant = async function() {
-  if (!confirm(`Are you sure you want to permanently delete ${applicant.full_name}?\n\nThis will remove ALL their data including test results, scores, and placement decisions.\n\nThis action CANNOT be undone.`)) return
-  if (!confirm(`Second confirmation: Delete ${applicant.full_name} permanently?`)) return
+  if (!confirm('Are you sure you want to permanently delete ' + applicant.full_name + '?\n\nThis removes ALL their data including test results, scores, and placement decisions.\n\nThis CANNOT be undone.')) return
+  if (!confirm('Second confirmation: Permanently delete ' + applicant.full_name + '?')) return
 
   try {
     const id = applicant.id
-    // Delete in order to respect foreign keys
-    await supabase.from('student_answers').delete().in('session_id',
-      (await supabase.from('test_sessions').select('id').eq('applicant_id', id)).data?.map(s => s.id) || []
-    )
+    const sessions = (await supabase.from('test_sessions').select('id').eq('applicant_id', id)).data || []
+    if (sessions.length > 0) {
+      await supabase.from('student_answers').delete().in('session_id', sessions.map(s => s.id))
+    }
     await supabase.from('test_sessions').delete().eq('applicant_id', id)
     await supabase.from('placement_decisions').delete().eq('applicant_id', id)
     await supabase.from('interview_records').delete().eq('applicant_id', id)
+    await supabase.from('applicant_documents').delete().eq('applicant_id', id)
     await supabase.from('placement_tokens').delete().eq('applicant_id', id)
     await supabase.from('applicants').delete().eq('id', id)
-    // Also delete transcript from storage if exists
-    if (applicant.transcript_url) {
-      const path = id + '/'
-      await supabase.storage.from('transcripts').remove([path])
-    }
-    alert(`${applicant.full_name} has been deleted.`)
+    alert(applicant.full_name + ' has been deleted.')
     window.location.href = 'dashboard.html'
   } catch(err) {
-    showSuccess('Error deleting: ' + err.message)
+    showError('Error deleting: ' + err.message)
   }
+}
+
+// ── ALERTS ──
+function showSuccess(msg) {
+  const el = document.getElementById('alertSuccess')
+  el.textContent = msg; el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 4000)
+}
+
+function showError(msg) {
+  document.getElementById('loadingMsg').style.display = 'none'
+  const el = document.getElementById('alertError')
+  el.textContent = msg; el.style.display = 'block'
 }
 
 init()
