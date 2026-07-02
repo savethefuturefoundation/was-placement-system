@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mark Responses — WAAPC Placement System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0f1117; --gold: #c8943a; --teal: #1d6b6e;
+    --paper: #f5f0e8; --cream: #ede7d4; --white: #fff;
+    --border: #d4cfc4; --muted: #7a7468; --rust: #a0432a;
+    --sidebar: 220px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar); background: var(--ink); display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand-tag { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.25rem; }
+  .sidebar-brand-name { font-family: 'Playfair Display', serif; font-size: 1rem; color: white; line-height: 1.3; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; color: #8a8278; font-size: 0.85rem; text-decoration: none; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: white; border-left-color: var(--gold); background: rgba(200,148,58,0.08); }
+  .sidebar-user { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.6rem; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: white; font-weight: 600; flex-shrink: 0; }
+  .user-name { font-size: 0.8rem; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .sign-out-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.75rem; }
+  .main { margin-left: var(--sidebar); min-height: 100vh; }
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .back-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+  .back-link:hover { color: var(--teal); }
+  .topbar h1 { font-family: 'Playfair Display', serif; font-size: 1.3rem; flex: 1; }
+  .btn { padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; transition: all 0.15s; text-decoration: none; display: inline-block; }
+  .btn-primary { background: var(--ink); color: white; }
+  .btn-primary:hover { background: var(--teal); }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-teal:hover { background: var(--ink); }
+  .btn-gold { background: var(--gold); color: white; }
+  .btn-gold:hover { background: var(--ink); }
+  .content { padding: 2rem; max-width: 860px; }
+  .student-banner { background: var(--ink); color: white; padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .student-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+  .student-meta { font-size: 0.82rem; color: #8a8278; margin-top: 0.2rem; }
+  .progress-summary { display: flex; gap: 1.5rem; font-size: 0.82rem; }
+  .prog-item { text-align: center; }
+  .prog-num { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: var(--gold); }
+  .prog-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #8a8278; }
+  .subject-section { margin-bottom: 2rem; }
+  .subject-header { padding: 0.75rem 1.25rem; font-family: 'DM Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 1rem; }
+  .subject-math { background: #e8f0ff; color: #1e40af; }
+  .subject-english { background: #fef3e8; color: #92400e; }
+  .subject-general_paper { background: #ecfdf5; color: #065f46; }
+  .question-card { background: var(--white); border: 1px solid var(--border); margin-bottom: 1rem; }
+  .question-card.mcq { border-left: 3px solid var(--border); }
+  .question-card.mcq.correct { border-left-color: #22c55e; }
+  .question-card.mcq.incorrect { border-left-color: var(--rust); }
+  .question-card.manual { border-left: 3px solid var(--gold); }
+  .question-card.manual.marked { border-left-color: var(--teal); }
+  .q-header { padding: 0.75rem 1rem; background: var(--cream); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .q-num { font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .q-type { font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 2px; }
+  .type-mcq { background: #e0e7ff; color: #3730a3; }
+  .type-short { background: #fef9c3; color: #854d0e; }
+  .type-essay { background: #fce7f3; color: #9d174d; }
+  .q-marks { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+  .q-body { padding: 1rem; }
+  .q-text { font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.75rem; font-weight: 500; }
+  .q-text-fr { font-size: 0.85rem; color: var(--muted); font-style: italic; margin-bottom: 0.75rem; }
+  .answer-box { background: var(--paper); border: 1px solid var(--border); padding: 0.75rem 1rem; font-size: 0.9rem; margin-bottom: 0.75rem; border-radius: 2px; }
+  .answer-label { font-size: 0.65rem; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+  .answer-correct { border-color: #86efac; background: #f0fdf4; }
+  .answer-incorrect { border-color: #fca5a5; background: #fef2f2; }
+  .answer-empty { border-color: var(--border); background: var(--cream); color: var(--muted); font-style: italic; }
+  .mcq-result { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .result-correct { color: #15803d; }
+  .result-incorrect { color: var(--rust); }
+  .rubric-box { background: #fffbeb; border: 1px solid #fde68a; padding: 0.75rem 1rem; margin-bottom: 0.75rem; border-radius: 2px; }
+  .rubric-label { font-size: 0.65rem; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #92400e; margin-bottom: 0.35rem; }
+  .rubric-text { font-size: 0.88rem; color: #78350f; line-height: 1.5; }
+  .marking-row { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  .mark-input-group { display: flex; align-items: center; gap: 0.5rem; }
+  .mark-input-group label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .mark-input { width: 60px; border: 1.5px solid var(--border); padding: 0.4rem 0.6rem; font-family: 'DM Mono', monospace; font-size: 0.9rem; text-align: center; outline: none; }
+  .mark-input:focus { border-color: var(--teal); }
+  .notes-input { flex: 1; min-width: 200px; border: 1.5px solid var(--border); padding: 0.4rem 0.75rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; outline: none; }
+  .notes-input:focus { border-color: var(--teal); }
+  .save-mark-btn { padding: 0.4rem 0.85rem; background: var(--teal); color: white; border: none; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .save-mark-btn:hover { background: var(--ink); }
+  .marked-badge { display: inline-block; background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 2px; }
+  .alert { padding: 0.75rem 1rem; font-size: 0.85rem; margin: 1rem 2rem; display: none; }
+  .alert.success { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+  .alert.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+  .score-summary { background: var(--white); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem; }
+  .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+  .score-item { text-align: center; padding: 0.75rem; background: var(--cream); }
+  .score-val { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
+  .score-lbl { font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.25rem; }
+  .loading { text-align: center; padding: 4rem; color: var(--muted); font-style: italic; }
+
+  /* PRINT STYLES */
+  @media print {
+    .sidebar, .topbar, .btn, .marking-row, .save-mark-btn, .alert { display: none !important; }
+    .main { margin-left: 0; }
+    .question-card { break-inside: avoid; }
+    body { background: white; }
+    .print-header { display: block !important; }
+  }
+  .print-header { display: none; text-align: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); }
+  .print-header h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
+  .print-header p { font-size: 0.9rem; color: var(--muted); margin-top: 0.25rem; }
+
+  @media(max-width: 900px) { .sidebar { display: none; } .main { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-tag">Placement System</div>
+    <div class="sidebar-brand-name">WAAPC<br>American School</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard.html"><span>📋</span> Dashboard</a>
+    <a class="nav-item" href="applicant-new.html"><span>➕</span> New Applicant</a>
+    <a class="nav-item" href="assessment-builder.html"><span>📝</span> Assessments</a>
+    <a class="nav-item" href="placement-review.html"><span>⚖️</span> Placements</a>
+    <a class="nav-item" href="change-password.html"><span>🔑</span> Change Password</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">—</div>
+    <div class="user-name" id="userName">…</div>
+    <button class="sign-out-btn" onclick="handleSignOut()">↩</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <a class="back-link" id="backLink" href="applicant-detail.html">← Back to Applicant</a>
+    <span style="color:var(--border);">|</span>
+    <h1 id="pageTitle">Test Responses</h1>
+    <button class="btn btn-gold" onclick="window.print()">🖨 Print / Download</button>
+    <button class="btn btn-teal" id="saveAllBtn" onclick="saveAllMarks()" style="display:none;">✓ Save All Marks & Recompute</button>
+  </div>
+
+  <div class="alert success" id="alertSuccess"></div>
+  <div class="alert error" id="alertError"></div>
+
+  <div class="student-banner" id="studentBanner" style="display:none;">
+    <div>
+      <div class="student-name" id="bannerName">—</div>
+      <div class="student-meta" id="bannerMeta">—</div>
+    </div>
+    <div class="progress-summary" id="progressSummary"></div>
+  </div>
+
+  <div class="content">
+    <div class="print-header">
+      <h2>WAAPC American School — Placement Test Responses</h2>
+      <p id="printMeta"></p>
+    </div>
+    <div class="loading" id="loadingMsg">Loading test responses…</div>
+    <div id="mainContent" style="display:none;"></div>
+  </div>
+</main>
+
+<script type="module">
+import { supabase, requireAuth, getCurrentStaff, signOut, computePlacement } from '../lib/supabase.js'
+
+let staff = null
+let applicant = null
+let allAnswers = [] // flat array of {session, question, answer}
+let pendingMarks = {} // { answerId: { marks, notes } }
+
+window.handleSignOut = signOut
+
+async function init() {
+  await requireAuth()
+  staff = await getCurrentStaff()
+  if (!staff) return
+  document.getElementById('userAvatar').textContent = staff.full_name.charAt(0).toUpperCase()
+  document.getElementById('userName').textContent = staff.full_name
+
+  const params = new URLSearchParams(window.location.search)
+  const id = params.get('id')
+  if (!id) { showError('No applicant ID.'); return }
+
+  document.getElementById('backLink').href = 'applicant-detail.html?id=' + id
+  await loadData(id)
+}
+
+async function loadData(applicantId) {
+  // Load applicant
+  const { data: app } = await supabase.from('applicants').select('*').eq('id', applicantId).single()
+  if (!app) { showError('Applicant not found.'); return }
+  applicant = app
+
+  document.getElementById('pageTitle').textContent = app.full_name + ' — Test Responses'
+  document.getElementById('bannerName').textContent = app.full_name
+  document.getElementById('bannerMeta').textContent = 'Age Band: ' + (app.age_band || '—') + '  ·  ' + app.parent_email
+  document.getElementById('studentBanner').style.display = 'flex'
+  document.getElementById('printMeta').textContent = 'Student: ' + app.full_name + '  |  Age Band: ' + app.age_band + '  |  Date: ' + new Date().toLocaleDateString('en-GB')
+
+  // Load sessions with questions and answers
+  const { data: sessions } = await supabase
+    .from('test_sessions')
+    .select('*, assessments(title, subject)')
+    .eq('applicant_id', applicantId)
+    .order('created_at')
+
+  if (!sessions || sessions.length === 0) {
+    document.getElementById('loadingMsg').textContent = 'No test sessions found for this student.'
+    return
+  }
+
+  // Load all answers for all sessions
+  const sessionIds = sessions.map(s => s.id)
+  const { data: answers } = await supabase
+    .from('student_answers')
+    .select('*, questions(question_text, question_text_fr, question_type, correct_answer, marks, skill_tag, options, options_fr)')
+    .in('session_id', sessionIds)
+    .order('created_at')
+
+  // Build flat structure
+  allAnswers = []
+  sessions.forEach(session => {
+    const sessionAnswers = (answers || []).filter(a => a.session_id === session.id)
+    sessionAnswers.forEach(answer => {
+      allAnswers.push({ session, answer })
+    })
+  })
+
+  document.getElementById('loadingMsg').style.display = 'none'
+  document.getElementById('mainContent').style.display = 'block'
+
+  // Check if academic staff — show save button
+  if (staff.role === 'academic' || staff.role === 'admin') {
+    document.getElementById('saveAllBtn').style.display = 'inline-block'
+  }
+
+  renderAll(sessions, answers || [])
+  updateProgressSummary(answers || [])
+}
+
+function renderAll(sessions, answers) {
+  const content = document.getElementById('mainContent')
+  let html = ''
+
+  // Score summary
+  const mcqAnswers = answers.filter(a => a.questions?.question_type === 'mcq')
+  const manualAnswers = answers.filter(a => a.questions?.question_type !== 'mcq')
+  const mcqEarned = mcqAnswers.reduce((s, a) => s + (a.marks_awarded || 0), 0)
+  const mcqTotal = mcqAnswers.reduce((s, a) => s + (a.questions?.marks || 0), 0)
+  const manualEarned = manualAnswers.reduce((s, a) => s + (a.marks_awarded || 0), 0)
+  const manualTotal = manualAnswers.reduce((s, a) => s + (a.questions?.marks || 0), 0)
+  const totalEarned = mcqEarned + manualEarned
+  const totalMarks = mcqTotal + manualTotal
+  const overallPct = totalMarks > 0 ? Math.round(totalEarned / totalMarks * 100) : 0
+
+  html += `
+    <div class="score-summary">
+      <div class="card-title" style="font-family:'DM Mono',monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--teal);">Score Summary</div>
+      <div class="score-grid">
+        <div class="score-item">
+          <div class="score-val">${mcqEarned}/${mcqTotal}</div>
+          <div class="score-lbl">MCQ Marks</div>
+        </div>
+        <div class="score-item">
+          <div class="score-val">${manualEarned}/${manualTotal}</div>
+          <div class="score-lbl">Written Marks</div>
+        </div>
+        <div class="score-item">
+          <div class="score-val" style="color:${overallPct>=65?'var(--teal)':overallPct>=50?'var(--gold)':'var(--rust)'};">${overallPct}%</div>
+          <div class="score-lbl">Overall</div>
+        </div>
+      </div>
+      ${manualTotal > 0 ? `<p style="font-size:0.82rem; color:var(--muted); margin-top:0.75rem;">⚠️ Written responses (short answer & essay) require manual marking below. Use the rubric guides to assign marks, then click <strong>Save All Marks & Recompute</strong>.</p>` : ''}
+    </div>
+  `
+
+  // Render by subject
+  sessions.forEach(session => {
+    const subj = session.assessments?.subject || ''
+    const subjLabel = subj === 'math' ? 'Mathematics' : subj === 'english' ? 'English Language' : 'General Paper'
+    const sessionAnswers = answers.filter(a => a.session_id === session.id)
+      .sort((a, b) => (a.questions?.order_index || 0) - (b.questions?.order_index || 0))
+
+    if (sessionAnswers.length === 0) return
+
+    const sessEarned = sessionAnswers.reduce((s, a) => s + (a.marks_awarded || 0), 0)
+    const sessTotal = sessionAnswers.reduce((s, a) => s + (a.questions?.marks || 0), 0)
+    const sessPct = sessTotal > 0 ? Math.round(sessEarned / sessTotal * 100) : 0
+
+    html += `
+      <div class="subject-section">
+        <div class="subject-header subject-${subj}">
+          ${subjLabel} — ${session.status?.toUpperCase()} — ${sessEarned}/${sessTotal} marks (${sessPct}%)
+        </div>
+    `
+
+    sessionAnswers.forEach((answer, idx) => {
+      const q = answer.questions
+      if (!q) return
+      const qNum = idx + 1
+      const isMCQ = q.question_type === 'mcq'
+      const isCorrect = answer.is_correct
+      const studentAnswer = answer.answer_text || ''
+      const isEmpty = !studentAnswer.trim()
+
+      let cardClass = isMCQ ? 'mcq' : 'manual'
+      if (isMCQ) cardClass += isCorrect ? ' correct' : ' incorrect'
+      if (!isMCQ && answer.marks_awarded > 0) cardClass += ' marked'
+
+      let typeLabel = isMCQ ? 'MCQ' : q.question_type === 'short_answer' ? 'Short Answer' : 'Essay'
+      let typeClass = isMCQ ? 'type-mcq' : q.question_type === 'short_answer' ? 'type-short' : 'type-essay'
+
+      html += `
+        <div class="question-card ${cardClass}" id="qcard-${answer.id}">
+          <div class="q-header">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+              <span class="q-num">Q${qNum}</span>
+              <span class="q-type ${typeClass}">${typeLabel}</span>
+              ${q.skill_tag ? `<span style="font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--muted);">${q.skill_tag}</span>` : ''}
+              ${!isMCQ && answer.marks_awarded > 0 ? `<span class="marked-badge">Marked: ${answer.marks_awarded}/${q.marks}</span>` : ''}
+            </div>
+            <span class="q-marks">${isMCQ ? (isCorrect ? '✅ ' : '❌ ') : ''}${isMCQ ? answer.marks_awarded || 0 : (answer.marks_awarded || 0)}/${q.marks} marks</span>
+          </div>
+          <div class="q-body">
+            <div class="q-text">${q.question_text}</div>
+            ${q.question_text_fr ? `<div class="q-text-fr">${q.question_text_fr}</div>` : ''}
+
+            ${isMCQ ? `
+              <div class="answer-label">Student's Answer</div>
+              <div class="answer-box ${isCorrect ? 'answer-correct' : isEmpty ? 'answer-empty' : 'answer-incorrect'}">
+                ${isEmpty ? 'No answer given' : studentAnswer}
+              </div>
+              <div class="mcq-result ${isCorrect ? 'result-correct' : 'result-incorrect'}">
+                ${isCorrect ? '✅ Correct' : `❌ Incorrect — Correct answer: ${q.correct_answer}`}
+              </div>
+            ` : `
+              <div class="answer-label">Student's Response</div>
+              <div class="answer-box ${isEmpty ? 'answer-empty' : ''}">
+                ${isEmpty ? 'No response given' : studentAnswer.replace(/\n/g, '<br>')}
+              </div>
+
+              ${q.correct_answer ? `
+                <div class="rubric-box">
+                  <div class="rubric-label">📋 Marking Guide / Expected Answer</div>
+                  <div class="rubric-text">${q.correct_answer}</div>
+                </div>
+              ` : ''}
+
+              <div class="marking-row">
+                <div class="mark-input-group">
+                  <label for="marks-${answer.id}">Marks (max ${q.marks}):</label>
+                  <input class="mark-input" type="number" id="marks-${answer.id}"
+                    min="0" max="${q.marks}" step="0.5"
+                    value="${answer.marks_awarded || 0}"
+                    onchange="recordMark('${answer.id}', '${q.marks}', this.value)">
+                </div>
+                <input class="notes-input" type="text" id="notes-${answer.id}"
+                  placeholder="Reviewer notes (optional)…"
+                  value="${answer.marker_notes || ''}"
+                  oninput="recordNote('${answer.id}', this.value)">
+                <button class="save-mark-btn" onclick="saveSingleMark('${answer.id}', '${q.marks}')">Save</button>
+              </div>
+            `}
+          </div>
+        </div>
+      `
+    })
+
+    html += '</div>'
+  })
+
+  content.innerHTML = html
+}
+
+function updateProgressSummary(answers) {
+  const manual = answers.filter(a => a.questions?.question_type !== 'mcq')
+  const marked = manual.filter(a => a.marks_awarded > 0 || (a.marker_notes && a.marker_notes.trim()))
+  document.getElementById('progressSummary').innerHTML = `
+    <div class="prog-item">
+      <div class="prog-num">${answers.filter(a => a.questions?.question_type === 'mcq').length}</div>
+      <div class="prog-label">MCQ</div>
+    </div>
+    <div class="prog-item">
+      <div class="prog-num">${marked.length}/${manual.length}</div>
+      <div class="prog-label">Written Marked</div>
+    </div>
+    <div class="prog-item">
+      <div class="prog-num">${answers.filter(a => !a.answer_text?.trim()).length}</div>
+      <div class="prog-label">Blank</div>
+    </div>
+  `
+}
+
+window.recordMark = function(answerId, maxMarks, value) {
+  const val = Math.min(parseFloat(value) || 0, parseFloat(maxMarks))
+  if (!pendingMarks[answerId]) pendingMarks[answerId] = {}
+  pendingMarks[answerId].marks = val
+  document.getElementById('marks-' + answerId).value = val
+}
+
+window.recordNote = function(answerId, value) {
+  if (!pendingMarks[answerId]) pendingMarks[answerId] = {}
+  pendingMarks[answerId].notes = value
+}
+
+window.saveSingleMark = async function(answerId, maxMarks) {
+  const marksInput = document.getElementById('marks-' + answerId)
+  const notesInput = document.getElementById('notes-' + answerId)
+  const marks = Math.min(parseFloat(marksInput.value) || 0, parseFloat(maxMarks))
+  const notes = notesInput?.value || ''
+
+  const { error } = await supabase.from('student_answers').update({
+    marks_awarded: marks,
+    is_correct: marks > 0,
+    marker_notes: notes
+  }).eq('id', answerId)
+
+  if (error) { showError('Error saving: ' + error.message); return }
+  showSuccess('Mark saved!')
+
+  // Update card visual
+  const card = document.getElementById('qcard-' + answerId)
+  if (card && marks > 0) card.classList.add('marked')
+}
+
+window.saveAllMarks = async function() {
+  const btn = document.getElementById('saveAllBtn')
+  btn.disabled = true
+  btn.textContent = 'Saving…'
+
+  try {
+    // Save all pending marks
+    for (const [answerId, data] of Object.entries(pendingMarks)) {
+      await supabase.from('student_answers').update({
+        marks_awarded: data.marks || 0,
+        is_correct: (data.marks || 0) > 0,
+        marker_notes: data.notes || ''
+      }).eq('id', answerId)
+    }
+
+    // Also save any marks entered directly (not in pendingMarks)
+    const allMarkInputs = document.querySelectorAll('.mark-input')
+    for (const input of allMarkInputs) {
+      const answerId = input.id.replace('marks-', '')
+      if (!pendingMarks[answerId]) {
+        const marks = parseFloat(input.value) || 0
+        const notes = document.getElementById('notes-' + answerId)?.value || ''
+        await supabase.from('student_answers').update({
+          marks_awarded: marks,
+          is_correct: marks > 0,
+          marker_notes: notes
+        }).eq('id', answerId)
+      }
+    }
+
+    // Recompute session percentages
+    const params = new URLSearchParams(window.location.search)
+    const applicantId = params.get('id')
+
+    // Get all sessions for this applicant
+    const { data: sessions } = await supabase
+      .from('test_sessions')
+      .select('id')
+      .eq('applicant_id', applicantId)
+
+    for (const session of (sessions || [])) {
+      const { data: answers } = await supabase
+        .from('student_answers')
+        .select('marks_awarded, questions(marks)')
+        .eq('session_id', session.id)
+
+      const earned = (answers || []).reduce((s, a) => s + (a.marks_awarded || 0), 0)
+      const total = (answers || []).reduce((s, a) => s + (a.questions?.marks || 0), 0)
+      const pct = total > 0 ? Math.round(earned / total * 100 * 100) / 100 : 0
+
+      await supabase.from('test_sessions').update({
+        raw_score: earned,
+        percentage: pct,
+        status: 'graded',
+        manual_marks_saved: true
+      }).eq('id', session.id)
+    }
+
+    // Recompute placement
+    await computePlacement(applicantId)
+
+    pendingMarks = {}
+    showSuccess('All marks saved! Placement scores have been recomputed.')
+    btn.textContent = '✓ Save All Marks & Recompute'
+    btn.disabled = false
+
+    // Reload to show updated scores
+    setTimeout(() => loadData(applicantId), 1500)
+
+  } catch(err) {
+    showError('Error: ' + err.message)
+    btn.disabled = false
+    btn.textContent = '✓ Save All Marks & Recompute'
+  }
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('alertSuccess')
+  el.textContent = msg; el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 4000)
+}
+
+function showError(msg) {
+  const el = document.getElementById('alertError')
+  el.textContent = msg; el.style.display = 'block'
+}
+
+init()
+</script>
+</body>
+</html>
