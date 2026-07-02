@@ -176,6 +176,30 @@ async function loadApplicant(id) {
   loadDocuments(id)
 }
 
+function buildSessionsHtml(sessions, applicantId) {
+  if (!sessions || sessions.length === 0) {
+    return '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No test sessions yet.</p>'
+  }
+  let html = '<div class="action-bar" style="margin-bottom:0.75rem;">'
+  html += '<a href="manual-marking.html?id=' + applicantId + '" class="btn btn-primary">📝 View & Mark Responses</a>'
+  html += '</div>'
+  sessions.forEach(s => {
+    const subj = (s.assessments?.subject || '').replace('_',' ').toUpperCase()
+    const subjClass = 'tag-' + (s.assessments?.subject || '')
+    const pct = s.percentage || 0
+    const color = pct >= 65 ? 'var(--teal)' : pct >= 50 ? 'var(--gold)' : 'var(--rust)'
+    const pctStr = s.percentage != null ? ' — ' + s.percentage.toFixed(1) + '%' : ''
+    html += '<div style="margin-bottom:0.75rem;">'
+    html += '<div class="info-row">'
+    html += '<span><span class="subject-tag ' + subjClass + '">' + subj + '</span></span>'
+    html += '<span class="info-value">' + s.status + pctStr + '</span>'
+    html += '</div>'
+    html += '<div class="score-bar-wrap"><div class="score-bar" style="width:' + pct + '%;background:' + color + '"></div></div>'
+    html += '</div>'
+  })
+  return html
+}
+
 function renderDetail() {
   const a = applicant
   const d = a.placement_decisions?.[0]
@@ -227,19 +251,7 @@ function renderDetail() {
       <!-- Test Sessions -->
       <div class="card">
         <div class="card-title">Test Sessions</div>
-        ${sessions.length === 0 ? '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No test sessions yet.</p>' : `
-          <div class="action-bar" style="margin-bottom:0.75rem;">
-            <a href="manual-marking.html?id=${a.id}" class="btn btn-primary">📝 View & Mark Responses</a>
-          </div>` + sessions.map(s => `
-            <div style="margin-bottom:0.75rem;">
-              <div class="info-row">
-                <span><span class="subject-tag tag-${s.assessments?.subject || ''}">${(s.assessments?.subject || '').replace('_',' ').toUpperCase()}</span></span>
-                <span class="info-value">${s.status} ${s.percentage != null ? '— ' + s.percentage.toFixed(1) + '%' : ''}</span>
-              </div>
-              <div class="score-bar-wrap"><div class="score-bar" style="width:${s.percentage||0}%;background:${(s.percentage||0)>=65?'var(--teal)':(s.percentage||0)>=50?'var(--gold)':'var(--rust)'}"></div></div>
-            </div>
-          `).join('')}
-        `}
+        ${buildSessionsHtml(sessions, a.id)}
       </div>
 
       <!-- Documents -->
