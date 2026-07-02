@@ -227,8 +227,10 @@ function renderDetail() {
       <!-- Test Sessions -->
       <div class="card">
         <div class="card-title">Test Sessions</div>
-        ${sessions.length === 0 ? '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No test sessions yet.</p>' :
-          sessions.map(s => `
+        ${sessions.length === 0 ? '<p style="font-size:0.85rem; color:var(--muted); font-style:italic;">No test sessions yet.</p>' : `
+          <div class="action-bar" style="margin-bottom:0.75rem;">
+            <a href="manual-marking.html?id=${a.id}" class="btn btn-primary">📝 View & Mark Responses</a>
+          </div>` + sessions.map(s => `
             <div style="margin-bottom:0.75rem;">
               <div class="info-row">
                 <span><span class="subject-tag tag-${s.assessments?.subject || ''}">${(s.assessments?.subject || '').replace('_',' ').toUpperCase()}</span></span>
@@ -237,6 +239,7 @@ function renderDetail() {
               <div class="score-bar-wrap"><div class="score-bar" style="width:${s.percentage||0}%;background:${(s.percentage||0)>=65?'var(--teal)':(s.percentage||0)>=50?'var(--gold)':'var(--rust)'}"></div></div>
             </div>
           `).join('')}
+        `}
       </div>
 
       <!-- Documents -->
